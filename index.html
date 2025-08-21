@@ -1,455 +1,396 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>FlightFluid — Master Fluid Flight</title>
-<meta name="description" content="FlightFluid helps you master fluid flight with AI-assisted planning, cinematic stabilization, and wind-aware guidance. Fly smoother, smarter, and safer." />
-<meta name="theme-color" content="#0A1220">
-<meta property="og:title" content="FlightFluid — Master Fluid Flight" />
-<meta property="og:description" content="AI-assisted flight planning, fluid path guidance, and cinematic stabilization." />
-<meta property="og:type" content="website" />
-<style>
-  /* ======= Base / Tokens ======= */
-  :root{
-    --bg:#0A1220;        /* Deep night-sky navy */
-    --panel:#0F1A2C;
-    --ink:#EAF2FF;
-    --muted:#9EB2D9;
-    --accent1:#00D4FF;   /* Aqua */
-    --accent2:#2E6BFF;   /* Sky/indigo */
-    --accent3:#7A49F8;   /* Violet */
-    --warm:#FFB45E;      /* Sunset highlight */
-    --radius:16px;
-    --shadow:0 12px 40px rgba(0,0,0,.35);
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;background:#ffffff;color:#111;font:16px/1.6 system-ui,-apple-system,Segoe UI,Inter,Roboto,Helvetica,Arial,sans-serif}
-  img{max-width:100%;display:block}
-  a{color:inherit;text-decoration:none}
-  .container{max-width:1200px;margin:0 auto;padding:0 20px}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FlightFluid — Master Fluid Flight</title>
+  <meta name="description" content="FlightFluid is a wind tunnel coaching app for iOS and Android. Book coaches, plan drills, capture flights, and get AI-powered debriefs to master fluid flight." />
+  <link rel="preload" as="image" href="hero-flightfluid-4k.webp" />
+  <style>
+    :root{
+      --ink:#0b1016;
+      --panel:#131b27;
+      --glass:rgba(25,35,50,.55);
+      --line:rgba(119,195,255,.18);
+      --text:#e7f4ff;
+      --muted:#a6b5c8;
+      --mag:#ff3aa7;
+      --vio:#9466ff;
+      --cy:#16d3ff;
+      --teal:#3ae0d9;
+      --grad: conic-gradient(from 180deg, var(--mag), var(--vio), var(--cy), var(--teal), var(--mag));
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Inter, Arial, "Noto Sans", sans-serif;
+      color:var(--text);
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(22,211,255,.07), transparent 60%),
+                  radial-gradient(900px 500px at 110% 10%, rgba(255,58,167,.06), transparent 60%),
+                  linear-gradient(135deg,#0b0f17 0%, #0f1723 50%, #0a1019 100%);
+      overflow-x:hidden;
+    }
+    /* animated ambient lines */
+    body::before, body::after{
+      content:""; position:fixed; inset:-20vmax; pointer-events:none; z-index:-1;
+      background: repeating-linear-gradient( 105deg, rgba(22,211,255,.06), rgba(22,211,255,0) 120px,
+                                             rgba(255,58,167,.06) 120px, rgba(255,58,167,0) 240px );
+      filter: blur(12px) saturate(120%);
+      opacity:.35; transform: rotate(0deg);
+      animation: streaks 28s linear infinite;
+    }
+    body::after{ animation-duration: 36s; opacity:.25; mix-blend-mode:screen; }
+    @keyframes streaks { to{ transform: rotate(360deg);} }
 
-  /* ======= Header ======= */
-  header{
-    position:sticky;top:0;z-index:50;
-    backdrop-filter:saturate(140%) blur(10px);
-    background:rgba(10,18,32,.7);
-    border-bottom:1px solid rgba(255,255,255,.06);
-    color:var(--ink);
-  }
-  nav{height:72px;display:flex;align-items:center;justify-content:space-between}
-  .brand{display:flex;align-items:center;gap:12px;font-weight:900;letter-spacing:.2px}
-  .logo{
-    width:36px;height:36px;border-radius:10px;display:grid;place-items:center;
-    background: radial-gradient(120% 120% at 0% 0%, var(--accent1), var(--accent2) 50%, var(--accent3) 100%);
-    box-shadow:inset 0 0 0 2px rgba(255,255,255,.15), 0 6px 20px rgba(0,212,255,.25);
-  }
-  .wordmark{font-size:20px}
-  .navlinks{display:flex;gap:22px}
-  .navlinks a{color:var(--muted);font-weight:600}
-  .navlinks a:hover{color:var(--ink)}
-  .cta{display:flex;gap:10px}
-  .btn{
-    display:inline-flex;align-items:center;gap:10px;
-    padding:12px 16px;border-radius:12px;font-weight:800
-  }
-  .btn.primary{
-    background:linear-gradient(90deg,var(--accent1),var(--accent2),var(--accent3));
-    color:#061022; box-shadow:0 10px 30px rgba(46,107,255,.28);
-  }
-  .btn.ghost{
-    border:1px solid rgba(255,255,255,.18); color:var(--ink);
-    background:transparent;
-  }
+    .container{max-width:1200px;margin:0 auto;padding:0 24px}
 
-  /* ======= Hero ======= */
-  .hero{
-    position:relative;overflow:hidden;color:var(--ink);
-    background:var(--bg);
-    padding:120px 0 80px;
-  }
-  .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:36px;align-items:center}
-  h1{font-size:clamp(34px,5.2vw,64px);line-height:1.05;margin:0 0 12px;
-     background:linear-gradient(90deg,var(--accent1),var(--accent2),var(--accent3));
-     -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-  .sub{color:var(--muted);font-size:18px;margin:0 0 20px}
-  .badges{display:flex;gap:12px;flex-wrap:wrap;margin:18px 0}
-  .badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;
-    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:var(--ink);font-weight:700}
-  .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px}
-  .social-proof{display:flex;gap:22px;align-items:center;margin-top:22px;color:var(--muted);font-size:14px}
-  .stars{color:#FFD166}
+    /* Header */
+    .header{ position:fixed; top:0; left:0; right:0; z-index:50; border-bottom:1px solid var(--line);
+      background: linear-gradient(to bottom, rgba(10,16,25,.9), rgba(10,16,25,.7)); backdrop-filter: blur(14px); }
+    .nav{ display:flex; align-items:center; justify-content:space-between; padding:14px 0; }
+    .logo{ font-weight:900; letter-spacing:.12em; text-transform:uppercase; font-size:22px; cursor:pointer;
+      background: linear-gradient(45deg,var(--mag),var(--vio),var(--cy)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+    .nav-links{ display:flex; gap:28px; list-style:none }
+    .nav-links a{ color:var(--muted); text-decoration:none; font-weight:700; letter-spacing:.02em; position:relative }
+    .nav-links a:hover{ color:var(--cy) }
+    .nav-links a::after{ content:""; position:absolute; left:0; bottom:-6px; height:2px; width:0; background:linear-gradient(90deg,var(--mag),var(--cy)); transition:width .25s }
+    .nav-links a:hover::after{ width:100% }
+    .burger{ display:none; flex-direction:column; gap:5px; cursor:pointer }
+    .burger span{ width:26px; height:2px; background:linear-gradient(90deg,var(--mag),var(--cy)); border-radius:2px }
+    .mobile{ display:none; position:fixed; top:58px; left:0; right:0; background:rgba(12,18,28,.98); border-bottom:1px solid var(--line); backdrop-filter: blur(12px); padding:18px; z-index:40 }
+    .mobile ul{ display:flex; flex-direction:column; list-style:none; gap:16px }
+    .mobile a{ text-decoration:none; color:var(--text); opacity:.8 }
 
-  /* Hero visual (animated airflow lines) */
-  .airflow{
-    position:absolute; inset:0; pointer-events:none; opacity:.9;
-  }
-  .line{fill:none; stroke-linecap:round; stroke-width:2}
-  @keyframes drift {
-    to { stroke-dashoffset:-1000; }
-  }
-  @media (prefers-reduced-motion:no-preference){
-    .line{animation:drift 22s linear infinite}
-    .line.fast{animation-duration:14s}
-    .line.slow{animation-duration:32s}
-  }
+    /* Hero */
+    .hero{ padding-top:110px; padding-bottom:90px; text-align:center; position:relative }
+    .hero-grid{ display:grid; grid-template-columns:1fr; gap:26px }
+    .hero-banner{ position:relative; border-radius:22px; overflow:hidden; border:1px solid var(--line); box-shadow:0 30px 90px rgba(0,0,0,.45); animation: float 7s ease-in-out infinite }
+    @keyframes float{ 0%,100%{ transform:translateY(0)} 50%{ transform:translateY(-8px)} }
+    .hero-banner img{ width:100%; height:420px; object-fit:cover; display:block }
+    .hero h1{ font-size: clamp(2.1rem, 1.4rem + 2.4vw, 4rem); line-height:1.05; font-weight:900; letter-spacing:.03em; margin:6px auto 14px; max-width:980px;
+      background: linear-gradient(45deg, var(--cy), var(--vio), var(--mag)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-transform:uppercase }
+    .hero p{ color:var(--muted); font-size:1.125rem; max-width:850px; margin:0 auto 26px }
+    .badges{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:8px }
+    .store{ display:inline-flex; align-items:center; gap:10px; text-decoration:none; color:white; font-weight:800; padding:14px 20px; border-radius:14px;
+      background: linear-gradient(45deg, var(--mag), var(--vio)); border:1px solid rgba(255,255,255,.08); box-shadow:0 10px 30px rgba(148,102,255,.25); position:relative; overflow:hidden }
+    .store.secondary{ background: linear-gradient(45deg, var(--vio), var(--cy)); box-shadow:0 10px 30px rgba(22,211,255,.22) }
+    .store::before{ content:""; position:absolute; inset:0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent); transform: translateX(-100%); transition: transform .6s; }
+    .store:hover::before{ transform: translateX(100%)}
 
-  .device{
-    background:linear-gradient(145deg,#0E1A30,#0A1220);
-    border:1px solid rgba(255,255,255,.08);
-    border-radius:28px;padding:18px;box-shadow:var(--shadow)
-  }
-  .screen{
-    background:#061022;border-radius:22px; padding:22px; aspect-ratio:9/19.5;
-    display:grid;place-items:center; position:relative; overflow:hidden;
-  }
-  .hud{
-    position:absolute;inset:0;pointer-events:none;
-    background: radial-gradient(60% 40% at 50% 30%, rgba(0,212,255,.08), transparent 60%),
-                radial-gradient(60% 40% at 50% 70%, rgba(122,73,248,.06), transparent 60%);
-  }
-  .mini-path{
-    stroke:url(#g1); stroke-width:6; fill:none; filter: drop-shadow(0 4px 8px rgba(0,212,255,.2));
-  }
-  .waypoint{fill:#FFB45E}
-  .play{width:68px;height:68px;border-radius:16px;display:grid;place-items:center;
-        background:linear-gradient(90deg,var(--accent1),var(--accent2),var(--accent3))}
-  .play::after{content:"";width:0;height:0;border-left:16px solid #061022;border-top:10px solid transparent;border-bottom:10px solid transparent;margin-left:4px}
+    /* Feature section */
+    .section{ padding:86px 0 }
+    .section h2{ text-align:center; font-size: clamp(1.6rem, 1.2rem + 1.2vw, 2.6rem); margin-bottom:54px; text-transform:uppercase; letter-spacing:.08em;
+      background: linear-gradient(45deg, var(--mag), var(--cy)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent }
+    .grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:28px }
+    .card{ background: var(--glass); border:1px solid var(--line); border-radius:18px; padding:28px; position:relative; overflow:hidden; transition: transform .25s, box-shadow .25s }
+    .card:hover{ transform: translateY(-6px); box-shadow:0 18px 60px rgba(0,0,0,.35) }
+    .card::after{ content:""; position:absolute; inset:-1px; border-radius:18px; padding:1px; background:var(--grad); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity:.15 }
+    .icon{ width:64px; height:64px; border-radius:14px; display:grid; place-items:center; font-size:28px; margin-bottom:14px;
+      background:linear-gradient(45deg,var(--mag),var(--vio),var(--cy)); box-shadow:0 10px 24px rgba(255,58,167,.22) }
+    .card h3{ font-size:20px; margin-bottom:8px }
+    .card p{ color:var(--muted); line-height:1.6 }
 
-  /* ======= Sections ======= */
-  section{scroll-margin-top:90px}
-  .section{padding:80px 0}
-  .section.light{background:#F7FAFF;color:#0B1220}
-  .section.dark{background:#0F1A2C;color:var(--ink)}
-  .center{text-align:center}
-  .kicker{display:inline-block;margin-bottom:8px;color:var(--accent1);font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:12px}
+    /* Process */
+    .steps{ display:grid; grid-template-columns: repeat(5,1fr); gap:24px }
+    .step{ text-align:center }
+    .dot{ width:56px; height:56px; border-radius:50%; margin:0 auto 12px; position:relative; display:grid; place-items:center; font-weight:900;
+      background: linear-gradient(45deg,var(--mag),var(--vio)); box-shadow: 0 8px 26px rgba(255,58,167,.3); }
+    .step p{ color:var(--muted) }
 
-  /* Features grid */
-  .grid{display:grid;gap:22px}
-  .features{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
-  .card{
-    background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-    border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:18px; color:var(--ink)
-  }
-  .card.light{background:white;border-color:#E7EEFA;color:#0B1220}
-  .card h3{margin:4px 0 6px;font-size:18px}
-  .card p{color:var(--muted)}
-  .icon{
-    width:44px;height:44px;border-radius:12px;display:grid;place-items:center;margin-bottom:8px;
-    background:linear-gradient(135deg,var(--accent1),var(--accent2)); color:#061022; font-weight:900
-  }
+    /* Coach strip */
+    .strip{ display:grid; grid-template-columns:repeat(4,1fr); gap:24px }
+    .coach{ background: var(--glass); border:1px solid var(--line); border-radius:16px; padding:20px; text-align:center }
+    .coach img{ width:100%; height:180px; object-fit:cover; border-radius:12px; margin-bottom:12px }
+    .coach small{ color:var(--muted) }
 
-  /* How-it-works */
-  .steps{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
-  .step{padding:18px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)}
-  .step .num{font-weight:900;color:var(--accent1)}
+    /* Pricing */
+    .pricing{ display:grid; grid-template-columns: repeat(3,1fr); gap:28px }
+    .plan{ background:rgba(28,40,60,.6); border:1px solid var(--line); border-radius:18px; padding:28px; position:relative; overflow:hidden }
+    .plan.pop{ outline:2px solid rgba(148,102,255,.35); box-shadow:0 20px 80px rgba(148,102,255,.2) }
+    .price{ font-size:38px; font-weight:900; margin:8px 0 12px; background:linear-gradient(45deg,var(--cy),var(--vio)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent }
+    .plan ul{ list-style:none; display:grid; gap:10px; color:var(--muted) }
+    .plan .cta{ margin-top:18px }
 
-  /* Pricing */
-  .pricing{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
-  .pricecard{padding:22px;border-radius:18px;border:1px solid #E7EEFA;background:#fff;box-shadow:0 18px 50px rgba(0,0,0,.06)}
-  .price{font-size:34px;font-weight:900}
-  .check{color:#2E6BFF}
+    .cta{ display:inline-block; padding:12px 18px; border-radius:12px; font-weight:800; text-decoration:none; color:#fff; background:linear-gradient(45deg,var(--mag),var(--vio)); border:1px solid rgba(255,255,255,.08) }
+    .cta.alt{ background:linear-gradient(45deg,var(--vio),var(--cy)) }
 
-  /* FAQ */
-  details{background:#fff;border:1px solid #E7EEFA;border-radius:14px;padding:14px}
-  summary{cursor:pointer;font-weight:800}
+    /* FAQ */
+    .faq{ max-width:900px; margin:0 auto; display:grid; gap:14px }
+    details{ background:var(--glass); border:1px solid var(--line); padding:18px 20px; border-radius:14px }
+    summary{ cursor:pointer; font-weight:800 }
+    details p{ color:var(--muted); margin-top:10px }
 
-  /* Footer */
-  footer{background:#000; color:#9EB2D9; padding:44px 0}
-  .footgrid{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center}
-  .small{font-size:13px}
+    /* Final CTA */
+    .final{ text-align:center; padding:86px 0; background: linear-gradient(180deg, rgba(148,102,255,.08), rgba(22,211,255,.06)); border-top:1px solid var(--line) }
 
-  /* Responsive */
-  @media (max-width:980px){
-    .hero-grid{grid-template-columns:1fr}
-  }
-</style>
+    /* Legal pages */
+    .hidden{ display:none }
+    .legal-wrap{ max-width:900px; margin:0 auto; }
+    .legal-header{ text-align:center; margin-bottom:26px }
+    .panel{ background:var(--glass); border:1px solid var(--line); border-radius:16px; padding:24px }
+    .panel h3{ margin-top:18px; margin-bottom:8px; color:#fff }
+    .panel p, .panel li{ color:var(--muted); line-height:1.65 }
+    .panel ul{ margin-left:20px }
+
+    /* Footer */
+    footer{ border-top:1px solid var(--line); background:rgba(10,16,25,.85); padding:32px 0; margin-top:40px }
+    .foot{ display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap }
+    .foot .links{ display:flex; gap:22px }
+    .foot a{ color:var(--muted); text-decoration:none }
+    .foot a:hover{ color:var(--mag) }
+
+    /* Responsive */
+    @media (max-width: 1024px){
+      .grid{ grid-template-columns:repeat(2,1fr) }
+      .steps{ grid-template-columns: repeat(3,1fr) }
+      .strip{ grid-template-columns: repeat(3,1fr) }
+      .pricing{ grid-template-columns: repeat(2,1fr) }
+    }
+    @media (max-width: 768px){
+      .nav-links{ display:none }
+      .burger{ display:flex }
+      .hero-banner img{ height:300px }
+      .grid{ grid-template-columns:1fr }
+      .steps{ grid-template-columns: repeat(2,1fr) }
+      .strip{ grid-template-columns: repeat(2,1fr) }
+      .pricing{ grid-template-columns: 1fr }
+    }
+    @media (max-width: 460px){
+      .hero-banner img{ height:220px }
+      .steps{ grid-template-columns:1fr }
+    }
+  </style>
 </head>
 <body>
-
-<header>
-  <nav class="container" aria-label="Primary">
-    <a href="#" class="brand" aria-label="FlightFluid home">
-      <span class="logo" aria-hidden="true">
-        <!-- simple fluid F glyph -->
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-          <path d="M5 6c5-3 10 0 10 4s-5 4-10 1m0 0h9" stroke="#061022" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-      </span>
-      <span class="wordmark">FlightFluid</span>
-    </a>
-    <div class="navlinks">
-      <a href="#features">Features</a>
-      <a href="#how">How it works</a>
-      <a href="#pricing">Pricing</a>
-      <a href="#faq">FAQ</a>
+  <!-- Header -->
+  <header class="header">
+    <nav class="nav container">
+      <div class="logo" onclick="goHome()">FlightFluid</div>
+      <ul class="nav-links">
+        <li><a href="#features" onclick="showMain()">Features</a></li>
+        <li><a href="#how" onclick="showMain()">How It Works</a></li>
+        <li><a href="#coaches" onclick="showMain()">Coaches</a></li>
+        <li><a href="#download" onclick="showMain()">Download</a></li>
+        <li><a href="#pricing" onclick="showMain()">Pricing</a></li>
+        <li><a onclick="openPrivacy()">Privacy</a></li>
+      </ul>
+      <div class="burger" onclick="toggleMobile()"><span></span><span></span><span></span></div>
+    </nav>
+    <div class="mobile" id="mobile">
+      <ul>
+        <li><a href="#features" onclick="closeMobile(); showMain()">Features</a></li>
+        <li><a href="#how" onclick="closeMobile(); showMain()">How It Works</a></li>
+        <li><a href="#coaches" onclick="closeMobile(); showMain()">Coaches</a></li>
+        <li><a href="#download" onclick="closeMobile(); showMain()">Download</a></li>
+        <li><a href="#pricing" onclick="closeMobile(); showMain()">Pricing</a></li>
+        <li><a onclick="closeMobile(); openPrivacy()">Privacy</a></li>
+        <li><a onclick="closeMobile(); openTerms()">Terms</a></li>
+      </ul>
     </div>
-    <div class="cta">
-      <a href="#download" class="btn ghost">Download</a>
-      <a href="#cta" class="btn primary">Get Started</a>
-    </div>
-  </nav>
-</header>
+  </header>
 
-<!-- HERO -->
-<section class="hero" aria-label="Hero">
-  <svg class="airflow" viewBox="0 0 1600 700" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <defs>
-      <linearGradient id="stroke" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0%" stop-color="#00D4FF"/>
-        <stop offset="50%" stop-color="#2E6BFF"/>
-        <stop offset="100%" stop-color="#7A49F8"/>
-      </linearGradient>
-    </defs>
-    <!-- animated fluid lines -->
-    <path class="line slow" stroke="url(#stroke)" stroke-opacity=".55" d="M0,120 C300,60 480,160 760,120 C1040,80 1260,180 1600,120" stroke-dasharray="1000 1000"/>
-    <path class="line" stroke="url(#stroke)" stroke-opacity=".45" d="M0,220 C320,160 520,260 780,200 C1060,140 1300,240 1600,200" stroke-dasharray="1000 1000"/>
-    <path class="line fast" stroke="url(#stroke)" stroke-opacity=".35" d="M0,320 C280,280 520,360 840,300 C1160,240 1360,340 1600,320" stroke-dasharray="1000 1000"/>
-    <path class="line slow" stroke="url(#stroke)" stroke-opacity=".45" d="M0,440 C320,420 580,500 900,420 C1180,360 1400,460 1600,440" stroke-dasharray="1000 1000"/>
-    <path class="line" stroke="url(#stroke)" stroke-opacity=".35" d="M0,560 C280,540 560,620 880,560 C1180,500 1420,600 1600,560" stroke-dasharray="1000 1000"/>
-  </svg>
+  <!-- MAIN -->
+  <main id="main">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-banner">
+          <img src="hero-flightfluid-4k.webp" alt="FlightFluid hero banner — fluid ribbons swirling around a flyer silhouette" />
+        </div>
+        <div>
+          <h1>Master Fluid Flight in the Wind Tunnel</h1>
+          <p>Plan sessions, run precision drills, record flights, and get AI-powered debriefs that turn every minute of tunnel time into progress. Available for iOS and Android.</p>
+          <div class="badges">
+            <a class="store" href="#download">  App Store</a>
+            <a class="store secondary" href="#download">🤖  Play Store</a>
+          </div>
+        </div>
+      </div>
+    </section>
 
-  <div class="container hero-grid">
-    <div>
-      <div class="badge">New • v1.0</div>
-      <h1>Master Fluid Flight</h1>
-      <p class="sub">AI‑assisted planning, wind‑aware guidance, and cinematic stabilization. FlightFluid helps you fly smoother lines and capture silky‑clean footage—every time.</p>
+    <!-- Features -->
+    <section class="section" id="features">
+      <div class="container">
+        <h2>Built for Flyers and Coaches</h2>
+        <div class="grid">
+          <div class="card">
+            <div class="icon">🎯</div>
+            <h3>Session Planner & Skill Tree</h3>
+            <p>Create goal‑based plans with levelled progressions (belly → back → sit → head‑down). Auto‑split time into focused sets with rest and notes.</p>
+          </div>
+          <div class="card">
+            <div class="icon">📹</div>
+            <h3>Capture & Annotate</h3>
+            <p>Record slow‑motion video, draw lines, and drop timestamps to mark entries, fall‑rate changes, docks, and exits.</p>
+          </div>
+          <div class="card">
+            <div class="icon">🧠</div>
+            <h3>AI Debrief</h3>
+            <p>Computer‑vision highlights posture symmetry, centerline drift, and transition smoothness. Get a prioritized, actionable briefing for the next session.</p>
+          </div>
+          <div class="card">
+            <div class="icon">📈</div>
+            <h3>Metrics that Matter</h3>
+            <p>Track speed bands, hold time on target, stability score, and transition efficiency with trendlines across flights.</p>
+          </div>
+          <div class="card">
+            <div class="icon">🗓️</div>
+            <h3>Booking & Logbook</h3>
+            <p>Book coaches, manage blocks, and auto‑log minutes, drills, notes, and media in a searchable logbook.</p>
+          </div>
+          <div class="card">
+            <div class="icon">🌐</div>
+            <h3>Coach Marketplace</h3>
+            <p>Find rated coaches by discipline and tunnel. Share plans and debriefs with students in one tap.</p>
+          </div>
+        </div>
+      </div>
+    </section>
 
-      <div class="hero-actions">
-        <a href="#download" class="btn primary">Download the App</a>
-        <a href="#demo" class="btn ghost">Watch Demo</a>
+    <!-- How it works -->
+    <section class="section" id="how">
+      <div class="container">
+        <h2>How FlightFluid Works</h2>
+        <div class="steps">
+          <div class="step"><div class="dot">1</div><h4>Set Goals</h4><p>Pick skills & drills; FlightFluid builds a plan.</p></div>
+          <div class="step"><div class="dot">2</div><h4>Book & Brief</h4><p>Share the plan with your coach and tunnel.</p></div>
+          <div class="step"><div class="dot">3</div><h4>Fly & Record</h4><p>Capture angles with auto‑timestamps.</p></div>
+          <div class="step"><div class="dot">4</div><h4>AI Debrief</h4><p>Get instant notes, cues, and drills.</p></div>
+          <div class="step"><div class="dot">5</div><h4>Progress</h4><p>Unlock next steps on your skill tree.</p></div>
+        </div>
       </div>
+    </section>
 
-      <div class="social-proof">
-        <span class="stars">★★★★★</span>
-        <span>Trusted by pilots & creators</span>
-        <span class="badge" style="background:rgba(255,180,94,.12);border-color:rgba(255,180,94,.35);color:#FFD9A6">Wind‑aware AI</span>
+    <!-- Coaches -->
+    <section class="section" id="coaches">
+      <div class="container">
+        <h2>Featured Coaches</h2>
+        <div class="strip">
+          <div class="coach"><img src="https://images.unsplash.com/photo-1521312709434-c3dc3a2b1c9b?auto=format&fit=crop&w=900&q=60" alt="coach"/><h4>Alex M.</h4><small>Dynamic / Sit‑Fly • iFLY</small></div>
+          <div class="coach"><img src="https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?auto=format&fit=crop&w=900&q=60" alt="coach"/><h4>Rina K.</h4><small>Head‑Down • IndoorWings</small></div>
+          <div class="coach"><img src="https://images.unsplash.com/photo-1532077795300-c4b487f601f5?auto=format&fit=crop&w=900&q=60" alt="coach"/><h4>Diego L.</h4><small>Back‑Flying • WindZone</small></div>
+          <div class="coach"><img src="https://images.unsplash.com/photo-1542326237-94b1c5a538d5?auto=format&fit=crop&w=900&q=60" alt="coach"/><h4>Sarah P.</h4><small>RW / Belly • SkyLab</small></div>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <div class="device" aria-label="App preview">
-      <div class="screen">
-        <!-- Mini flight path demo -->
-        <svg viewBox="0 0 400 800" width="100%" height="100%" aria-hidden="true">
-          <defs>
-            <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#00D4FF"/><stop offset="50%" stop-color="#2E6BFF"/><stop offset="100%" stop-color="#7A49F8"/>
-            </linearGradient>
-          </defs>
-          <path class="mini-path" d="M40,740 C120,620 120,520 200,480 C280,440 320,360 260,300 C220,260 180,240 180,200 C180,160 230,140 260,120 C300,94 330,70 360,60" />
-          <circle class="waypoint" cx="200" cy="480" r="6"/>
-          <circle class="waypoint" cx="260" cy="300" r="6"/>
-          <circle class="waypoint" cx="260" cy="120" r="6"/>
-        </svg>
-        <div class="hud"></div>
+    <!-- Pricing -->
+    <section class="section" id="pricing">
+      <div class="container">
+        <h2>Simple Pricing</h2>
+        <div class="pricing">
+          <div class="plan">
+            <h3>Solo</h3>
+            <div class="price">Free</div>
+            <ul>
+              <li>Session planner & basic logbook</li>
+              <li>Record & annotate videos</li>
+              <li>3 AI debriefs / month</li>
+            </ul>
+            <a class="cta" href="#download">Get Started</a>
+          </div>
+          <div class="plan pop">
+            <h3>Pro Flyer</h3>
+            <div class="price">$9 / mo</div>
+            <ul>
+              <li>Unlimited AI debriefs</li>
+              <li>Advanced metrics & trends</li>
+              <li>Cloud media sync</li>
+            </ul>
+            <a class="cta alt" href="#download">Go Pro</a>
+          </div>
+          <div class="plan">
+            <h3>Coach</h3>
+            <div class="price">$19 / mo</div>
+            <ul>
+              <li>Student management</li>
+              <li>Shared plans & notes</li>
+              <li>Marketplace listing</li>
+            </ul>
+            <a class="cta" href="#download">Start Coaching</a>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-</section>
+    </section>
 
-<!-- FEATURES -->
-<section id="features" class="section dark">
-  <div class="container">
-    <p class="kicker">Features</p>
-    <h2 class="center" style="margin:0 0 12px">Everything for fluid, confident flight</h2>
-    <p class="center" style="color:var(--muted);max-width:740px;margin:0 auto 30px">
-      Plan perfect lines, adapt to wind, and capture cinematic motion with AI that keeps things smooth and safe.
-    </p>
+    <!-- Download CTA -->
+    <section class="final" id="download">
+      <div class="container">
+        <h2 style="text-transform:uppercase; letter-spacing:.08em; background:linear-gradient(45deg,var(--mag),var(--cy)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent">Download FlightFluid</h2>
+        <p style="color:var(--muted); max-width:820px; margin:8px auto 22px">Join flyers worldwide mastering fluid flight with structured plans, real‑time cues, and AI debriefs.</p>
+        <div class="badges">
+          <a class="store" href="#">  App Store</a>
+          <a class="store secondary" href="#">🤖  Play Store</a>
+        </div>
+      </div>
+    </section>
+  </main>
 
-    <div class="grid features">
-      <div class="card">
-        <div class="icon">↝</div>
-        <h3>Fluid Path Planner</h3>
-        <p>Design S‑curves and arcs that minimize abrupt bank and yaw. Export paths or use as flying reference.</p>
+  <!-- PRIVACY -->
+  <section id="privacy" class="hidden">
+    <div class="container legal-wrap">
+      <div class="legal-header">
+        <h2 style="text-transform:uppercase; background:linear-gradient(45deg,var(--mag),var(--cy)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent">Privacy Policy</h2>
+        <p class="muted">Last updated: Aug 2025</p>
       </div>
-      <div class="card">
-        <div class="icon">🎥</div>
-        <h3>Cinematic Stabilization</h3>
-        <p>On‑device smoothing and horizon assist for buttery footage—great for reels and professional edits.</p>
-      </div>
-      <div class="card">
-        <div class="icon">🧭</div>
-        <h3>Wind‑Aware Guidance</h3>
-        <p>Live wind estimation nudges your line so you maintain speed and cadence without wrestling gusts.</p>
-      </div>
-      <div class="card">
-        <div class="icon">📈</div>
-        <h3>Telemetry HUD</h3>
-        <p>Minimal overlays for speed, pitch, roll, and drift—tuned for readability in bright conditions.</p>
-      </div>
-      <div class="card">
-        <div class="icon">🎮</div>
-        <h3>Practice Mode</h3>
-        <p>Simulate lines and muscle memory with visual cues—then take the exact flow outdoors.</p>
-      </div>
-      <div class="card">
-        <div class="icon">🔗</div>
-        <h3>Integrations</h3>
-        <p>Export to common editors and flight tools. Share paths with teammates in one tap.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- HOW IT WORKS -->
-<section id="how" class="section light">
-  <div class="container">
-    <p class="kicker">How it works</p>
-    <h2 class="center" style="margin-bottom:26px">Sense → Predict → Plan → Execute</h2>
-    <div class="grid steps">
-      <div class="step">
-        <div class="num">01</div>
-        <h3>Sense</h3>
-        <p>Gather inputs (wind hints, speed, orientation, environment) from device sensors and optional feeds.</p>
-      </div>
-      <div class="step">
-        <div class="num">02</div>
-        <h3>Predict</h3>
-        <p>AI infers drift, inertia, and cross‑wind effect to keep lines smooth and consistent.</p>
-      </div>
-      <div class="step">
-        <div class="num">03</div>
-        <h3>Plan</h3>
-        <p>Generates fluid curves and reference cues tailored to your style and target shot.</p>
-      </div>
-      <div class="step">
-        <div class="num">04</div>
-        <h3>Execute</h3>
-        <p>Guidance overlays and subtle alerts help you hold flow, not fight it.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- DEMO / CTA -->
-<section id="demo" class="section dark">
-  <div class="container center">
-    <p class="kicker">See it in action</p>
-    <h2>From choppy lines to glass‑smooth flow</h2>
-    <p style="color:var(--muted);max-width:680px;margin:0 auto 24px">
-      Watch FlightFluid optimize a windy line into a stable arc—without killing your creative style.
-    </p>
-    <div style="display:flex;justify-content:center;margin:18px 0 26px">
-      <div class="play" aria-label="Play demo video"></div>
-    </div>
-    <a href="#download" class="btn primary">Get FlightFluid</a>
-  </div>
-</section>
-
-<!-- PRICING -->
-<section id="pricing" class="section light">
-  <div class="container">
-    <p class="kicker">Pricing</p>
-    <h2 class="center" style="margin-bottom:26px">Start free. Unlock pro flow.</h2>
-    <div class="grid pricing">
-      <div class="pricecard">
-        <h3>Free</h3>
-        <p class="price">$0</p>
-        <p>Core planner, basic HUD, 3 saved lines</p>
+      <div class="panel">
+        <p>FlightFluid processes your account details and training data to provide coaching features. Videos are stored locally unless you enable cloud sync. Text prompts for AI debriefs may be sent to trusted providers; videos are not used to train models.</p>
+        <h3>Data We Collect</h3>
         <ul>
-          <li>✓ Fluid Path Planner</li>
-          <li>✓ Basic stabilization</li>
-          <li>✓ Community presets</li>
+          <li>Account: name, email</li>
+          <li>Training: plans, notes, metrics, media</li>
+          <li>Diagnostics: crash & performance logs</li>
         </ul>
-      </div>
-      <div class="pricecard" style="border-color:#D7E2FF; box-shadow:0 18px 50px rgba(46,107,255,.12)">
-        <h3>Pro</h3>
-        <p class="price">$9<span class="small">/mo</span></p>
-        <p>Wind‑aware AI, full stabilization, unlimited lines</p>
-        <ul>
-          <li class="check">✓ Wind‑Aware Guidance</li>
-          <li class="check">✓ Pro stabilization & export</li>
-          <li class="check">✓ Cloud sync & share</li>
-        </ul>
-      </div>
-      <div class="pricecard">
-        <h3>Teams</h3>
-        <p class="price">$29<span class="small">/mo</span></p>
-        <p>Collaboration, shared libraries, roles</p>
-        <ul>
-          <li>✓ Team libraries</li>
-          <li>✓ Roles & permissions</li>
-          <li>✓ Priority support</li>
-        </ul>
+        <h3>Your Rights</h3>
+        <p>Access, export, correct, or delete your data at any time: <strong>privacy@flightfluid.app</strong>.</p>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- DOWNLOAD -->
-<section id="download" class="section dark">
-  <div class="container center">
-    <p class="kicker">Download</p>
-    <h2>Fly smoother today</h2>
-    <p style="color:var(--muted);max-width:700px;margin:0 auto 22px">
-      Available on iOS and Android. Works standalone; advanced features may require compatible flight hardware.
-    </p>
-    <div class="badges" style="justify-content:center">
-      <a class="btn primary" aria-label="App Store (placeholder)">App Store</a>
-      <a class="btn ghost" aria-label="Google Play (placeholder)">Google Play</a>
+  <!-- TERMS -->
+  <section id="terms" class="hidden">
+    <div class="container legal-wrap">
+      <div class="legal-header">
+        <h2 style="text-transform:uppercase; background:linear-gradient(45deg,var(--mag),var(--cy)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent">Terms of Service</h2>
+      </div>
+      <div class="panel">
+        <p>By using FlightFluid you agree to follow local laws and tunnel rules. You retain ownership of your videos and training content and grant us a limited license to process them to deliver the service.</p>
+        <h3>Safety</h3>
+        <p>Coaching advice is guidance only. Always follow your instructor and facility procedures.</p>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- FAQ -->
-<section id="faq" class="section light">
-  <div class="container">
-    <p class="kicker">FAQ</p>
-    <h2 class="center" style="margin-bottom:20px">Questions, answered</h2>
-    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
-      <details open>
-        <summary>Does FlightFluid control my aircraft?</summary>
-        <p>No. FlightFluid provides planning and guidance cues. Always maintain manual control and follow local regulations.</p>
-      </details>
-      <details>
-        <summary>Will it work without external sensors?</summary>
-        <p>Yes. Core features run on‑device. Wind‑aware guidance improves with supported data sources when available.</p>
-      </details>
-      <details>
-        <summary>Can I export paths to my editor?</summary>
-        <p>Pro users can export reference paths and stabilization data to common video editors and tools.</p>
-      </details>
-      <details>
-        <summary>Is there a team plan?</summary>
-        <p>Yes—Teams includes shared libraries, roles, and collaboration features for crews and organizations.</p>
-      </details>
+  <footer>
+    <div class="container foot">
+      <div class="logo" onclick="goHome()">FlightFluid</div>
+      <div class="links">
+        <a href="#features" onclick="showMain()">Features</a>
+        <a href="#download" onclick="showMain()">Download</a>
+        <a onclick="openPrivacy()">Privacy</a>
+        <a onclick="openTerms()">Terms</a>
+      </div>
+      <small style="color:var(--muted)">© 2025 FlightFluid. Master Fluid Flight.</small>
     </div>
-  </div>
-</section>
+  </footer>
 
-<!-- FINAL CTA -->
-<section id="cta" class="section dark">
-  <div class="container center">
-    <h2>Own your flow.</h2>
-    <p style="color:var(--muted);max-width:680px;margin:0 auto 18px">
-      Fluid flight isn’t luck—it’s a system. FlightFluid makes the system simple.
-    </p>
-    <a href="#download" class="btn primary">Get FlightFluid</a>
-  </div>
-</section>
+  <script>
+    const mobile = document.getElementById('mobile');
+    function toggleMobile(){ mobile.style.display = mobile.style.display==='block' ? 'none' : 'block'; }
+    function closeMobile(){ mobile.style.display='none'; }
 
-<footer>
-  <div class="container footgrid">
-    <div>
-      <strong>FlightFluid</strong> • <span class="small">© <span id="year"></span> flightfluid.com</span>
-      <div class="small">Always fly responsibly and comply with local laws and airspace regulations.</div>
-    </div>
-    <div class="small"><a href="#">Privacy</a> • <a href="#">Terms</a> • <a href="mailto:hello@flightfluid.com">hello@flightfluid.com</a></div>
-  </div>
-</footer>
+    const main = document.getElementById('main');
+    const privacy = document.getElementById('privacy');
+    const terms = document.getElementById('terms');
 
-<script>
-  // Smooth scroll
-  document.querySelectorAll('a[href^="#"]').forEach(a=>{
-    a.addEventListener('click',e=>{
-      const target = document.querySelector(a.getAttribute('href'));
-      if(!target) return;
-      e.preventDefault();
-      target.scrollIntoView({behavior:'smooth',block:'start'});
-    });
-  });
-  // Year
-  document.getElementById('year').textContent = new Date().getFullYear();
-</script>
+    function showMain(){ main.classList.remove('hidden'); privacy.classList.add('hidden'); terms.classList.add('hidden'); window.scrollTo(0,0); }
+    function openPrivacy(){ main.classList.add('hidden'); terms.classList.add('hidden'); privacy.classList.remove('hidden'); window.location.hash = '#privacy'; window.scrollTo(0,0); }
+    function openTerms(){ main.classList.add('hidden'); privacy.classList.add('hidden'); terms.classList.remove('hidden'); window.location.hash = '#terms'; window.scrollTo(0,0); }
+    function goHome(){ history.pushState(null,'',window.location.pathname); showMain(); }
+
+    // hash routing on load/back
+    function route(){ const h = location.hash; if(h==='#privacy') openPrivacy(); else if(h==='#terms') openTerms(); else showMain(); }
+    window.addEventListener('popstate', route); window.addEventListener('load', route);
+  </script>
 </body>
 </html>
