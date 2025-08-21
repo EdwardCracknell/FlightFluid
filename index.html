@@ -305,10 +305,9 @@
         .hero-banner {
             width: 100%;
             max-width: 1200px;
-            height: 500px;
+            height: 600px;
             margin: 0 auto 80px;
             border-radius: 25px;
-            background: linear-gradient(135deg, #0a0e1a 0%, #1a2332 100%);
             position: relative;
             overflow: hidden;
             box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4);
@@ -316,61 +315,32 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            background: linear-gradient(135deg, #0a0e1a 0%, #1a2332 100%);
         }
         
-        .hero-banner::before {
+        .hero-banner img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 23px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .hero-banner::after {
             content: '';
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: conic-gradient(from 0deg at 50% 50%, 
-                transparent 0deg, 
-                rgba(0, 208, 255, 0.1) 60deg, 
-                transparent 120deg, 
-                rgba(102, 178, 255, 0.1) 180deg, 
-                transparent 240deg, 
-                rgba(0, 147, 233, 0.1) 300deg, 
-                transparent 360deg);
-            animation: spinFluid 10s linear infinite;
-        }
-        
-        @keyframes spinFluid {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        
-        .banner-content {
-            position: relative;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, 
+                rgba(10, 14, 26, 0.2) 0%, 
+                transparent 50%, 
+                rgba(10, 14, 26, 0.3) 100%);
+            pointer-events: none;
             z-index: 2;
-            text-align: center;
-            padding: 40px;
-        }
-        
-        .banner-title {
-            font-size: 3.5rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, #00d0ff 0%, #ffffff 50%, #00d0ff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-        }
-        
-        .banner-subtitle {
-            font-size: 1.3rem;
-            color: #a8c5e0;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-        
-        .banner-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            animation: pulse 2s ease-in-out infinite;
+            border-radius: 23px;
         }
         
         @keyframes pulse {
@@ -1011,11 +981,7 @@
             }
             
             .hero-banner {
-                height: 300px;
-            }
-            
-            .banner-title {
-                font-size: 2rem;
+                height: 350px;
             }
             
             .section-header h2 {
@@ -1067,10 +1033,6 @@
             
             .hero-banner {
                 height: 250px;
-            }
-            
-            .banner-title {
-                font-size: 1.5rem;
             }
             
             .download-btn {
@@ -1180,11 +1142,7 @@
                 
                 <!-- Hero Banner -->
                 <div class="hero-banner fade-in">
-                    <div class="banner-content">
-                        <div class="banner-icon">🌀</div>
-                        <div class="banner-title">FluidFlight</div>
-                        <div class="banner-subtitle">Master Fluid Flight</div>
-                    </div>
+                    <img src="hero-flightfluid-4k.webp" alt="FluidFlight - Master Fluid Flight">
                 </div>
             </div>
         </section>
