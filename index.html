@@ -1,396 +1,1813 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FlightFluid — Master Fluid Flight</title>
-  <meta name="description" content="FlightFluid is a wind tunnel coaching app for iOS and Android. Book coaches, plan drills, capture flights, and get AI-powered debriefs to master fluid flight." />
-  <link rel="preload" as="image" href="hero-flightfluid-4k.webp" />
-  <style>
-    :root{
-      --ink:#0b1016;
-      --panel:#131b27;
-      --glass:rgba(25,35,50,.55);
-      --line:rgba(119,195,255,.18);
-      --text:#e7f4ff;
-      --muted:#a6b5c8;
-      --mag:#ff3aa7;
-      --vio:#9466ff;
-      --cy:#16d3ff;
-      --teal:#3ae0d9;
-      --grad: conic-gradient(from 180deg, var(--mag), var(--vio), var(--cy), var(--teal), var(--mag));
-    }
-    *{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%}
-    body{
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Inter, Arial, "Noto Sans", sans-serif;
-      color:var(--text);
-      background: radial-gradient(1200px 600px at 20% -10%, rgba(22,211,255,.07), transparent 60%),
-                  radial-gradient(900px 500px at 110% 10%, rgba(255,58,167,.06), transparent 60%),
-                  linear-gradient(135deg,#0b0f17 0%, #0f1723 50%, #0a1019 100%);
-      overflow-x:hidden;
-    }
-    /* animated ambient lines */
-    body::before, body::after{
-      content:""; position:fixed; inset:-20vmax; pointer-events:none; z-index:-1;
-      background: repeating-linear-gradient( 105deg, rgba(22,211,255,.06), rgba(22,211,255,0) 120px,
-                                             rgba(255,58,167,.06) 120px, rgba(255,58,167,0) 240px );
-      filter: blur(12px) saturate(120%);
-      opacity:.35; transform: rotate(0deg);
-      animation: streaks 28s linear infinite;
-    }
-    body::after{ animation-duration: 36s; opacity:.25; mix-blend-mode:screen; }
-    @keyframes streaks { to{ transform: rotate(360deg);} }
-
-    .container{max-width:1200px;margin:0 auto;padding:0 24px}
-
-    /* Header */
-    .header{ position:fixed; top:0; left:0; right:0; z-index:50; border-bottom:1px solid var(--line);
-      background: linear-gradient(to bottom, rgba(10,16,25,.9), rgba(10,16,25,.7)); backdrop-filter: blur(14px); }
-    .nav{ display:flex; align-items:center; justify-content:space-between; padding:14px 0; }
-    .logo{ font-weight:900; letter-spacing:.12em; text-transform:uppercase; font-size:22px; cursor:pointer;
-      background: linear-gradient(45deg,var(--mag),var(--vio),var(--cy)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
-    .nav-links{ display:flex; gap:28px; list-style:none }
-    .nav-links a{ color:var(--muted); text-decoration:none; font-weight:700; letter-spacing:.02em; position:relative }
-    .nav-links a:hover{ color:var(--cy) }
-    .nav-links a::after{ content:""; position:absolute; left:0; bottom:-6px; height:2px; width:0; background:linear-gradient(90deg,var(--mag),var(--cy)); transition:width .25s }
-    .nav-links a:hover::after{ width:100% }
-    .burger{ display:none; flex-direction:column; gap:5px; cursor:pointer }
-    .burger span{ width:26px; height:2px; background:linear-gradient(90deg,var(--mag),var(--cy)); border-radius:2px }
-    .mobile{ display:none; position:fixed; top:58px; left:0; right:0; background:rgba(12,18,28,.98); border-bottom:1px solid var(--line); backdrop-filter: blur(12px); padding:18px; z-index:40 }
-    .mobile ul{ display:flex; flex-direction:column; list-style:none; gap:16px }
-    .mobile a{ text-decoration:none; color:var(--text); opacity:.8 }
-
-    /* Hero */
-    .hero{ padding-top:110px; padding-bottom:90px; text-align:center; position:relative }
-    .hero-grid{ display:grid; grid-template-columns:1fr; gap:26px }
-    .hero-banner{ position:relative; border-radius:22px; overflow:hidden; border:1px solid var(--line); box-shadow:0 30px 90px rgba(0,0,0,.45); animation: float 7s ease-in-out infinite }
-    @keyframes float{ 0%,100%{ transform:translateY(0)} 50%{ transform:translateY(-8px)} }
-    .hero-banner img{ width:100%; height:420px; object-fit:cover; display:block }
-    .hero h1{ font-size: clamp(2.1rem, 1.4rem + 2.4vw, 4rem); line-height:1.05; font-weight:900; letter-spacing:.03em; margin:6px auto 14px; max-width:980px;
-      background: linear-gradient(45deg, var(--cy), var(--vio), var(--mag)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; text-transform:uppercase }
-    .hero p{ color:var(--muted); font-size:1.125rem; max-width:850px; margin:0 auto 26px }
-    .badges{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:8px }
-    .store{ display:inline-flex; align-items:center; gap:10px; text-decoration:none; color:white; font-weight:800; padding:14px 20px; border-radius:14px;
-      background: linear-gradient(45deg, var(--mag), var(--vio)); border:1px solid rgba(255,255,255,.08); box-shadow:0 10px 30px rgba(148,102,255,.25); position:relative; overflow:hidden }
-    .store.secondary{ background: linear-gradient(45deg, var(--vio), var(--cy)); box-shadow:0 10px 30px rgba(22,211,255,.22) }
-    .store::before{ content:""; position:absolute; inset:0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent); transform: translateX(-100%); transition: transform .6s; }
-    .store:hover::before{ transform: translateX(100%)}
-
-    /* Feature section */
-    .section{ padding:86px 0 }
-    .section h2{ text-align:center; font-size: clamp(1.6rem, 1.2rem + 1.2vw, 2.6rem); margin-bottom:54px; text-transform:uppercase; letter-spacing:.08em;
-      background: linear-gradient(45deg, var(--mag), var(--cy)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent }
-    .grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:28px }
-    .card{ background: var(--glass); border:1px solid var(--line); border-radius:18px; padding:28px; position:relative; overflow:hidden; transition: transform .25s, box-shadow .25s }
-    .card:hover{ transform: translateY(-6px); box-shadow:0 18px 60px rgba(0,0,0,.35) }
-    .card::after{ content:""; position:absolute; inset:-1px; border-radius:18px; padding:1px; background:var(--grad); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity:.15 }
-    .icon{ width:64px; height:64px; border-radius:14px; display:grid; place-items:center; font-size:28px; margin-bottom:14px;
-      background:linear-gradient(45deg,var(--mag),var(--vio),var(--cy)); box-shadow:0 10px 24px rgba(255,58,167,.22) }
-    .card h3{ font-size:20px; margin-bottom:8px }
-    .card p{ color:var(--muted); line-height:1.6 }
-
-    /* Process */
-    .steps{ display:grid; grid-template-columns: repeat(5,1fr); gap:24px }
-    .step{ text-align:center }
-    .dot{ width:56px; height:56px; border-radius:50%; margin:0 auto 12px; position:relative; display:grid; place-items:center; font-weight:900;
-      background: linear-gradient(45deg,var(--mag),var(--vio)); box-shadow: 0 8px 26px rgba(255,58,167,.3); }
-    .step p{ color:var(--muted) }
-
-    /* Coach strip */
-    .strip{ display:grid; grid-template-columns:repeat(4,1fr); gap:24px }
-    .coach{ background: var(--glass); border:1px solid var(--line); border-radius:16px; padding:20px; text-align:center }
-    .coach img{ width:100%; height:180px; object-fit:cover; border-radius:12px; margin-bottom:12px }
-    .coach small{ color:var(--muted) }
-
-    /* Pricing */
-    .pricing{ display:grid; grid-template-columns: repeat(3,1fr); gap:28px }
-    .plan{ background:rgba(28,40,60,.6); border:1px solid var(--line); border-radius:18px; padding:28px; position:relative; overflow:hidden }
-    .plan.pop{ outline:2px solid rgba(148,102,255,.35); box-shadow:0 20px 80px rgba(148,102,255,.2) }
-    .price{ font-size:38px; font-weight:900; margin:8px 0 12px; background:linear-gradient(45deg,var(--cy),var(--vio)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent }
-    .plan ul{ list-style:none; display:grid; gap:10px; color:var(--muted) }
-    .plan .cta{ margin-top:18px }
-
-    .cta{ display:inline-block; padding:12px 18px; border-radius:12px; font-weight:800; text-decoration:none; color:#fff; background:linear-gradient(45deg,var(--mag),var(--vio)); border:1px solid rgba(255,255,255,.08) }
-    .cta.alt{ background:linear-gradient(45deg,var(--vio),var(--cy)) }
-
-    /* FAQ */
-    .faq{ max-width:900px; margin:0 auto; display:grid; gap:14px }
-    details{ background:var(--glass); border:1px solid var(--line); padding:18px 20px; border-radius:14px }
-    summary{ cursor:pointer; font-weight:800 }
-    details p{ color:var(--muted); margin-top:10px }
-
-    /* Final CTA */
-    .final{ text-align:center; padding:86px 0; background: linear-gradient(180deg, rgba(148,102,255,.08), rgba(22,211,255,.06)); border-top:1px solid var(--line) }
-
-    /* Legal pages */
-    .hidden{ display:none }
-    .legal-wrap{ max-width:900px; margin:0 auto; }
-    .legal-header{ text-align:center; margin-bottom:26px }
-    .panel{ background:var(--glass); border:1px solid var(--line); border-radius:16px; padding:24px }
-    .panel h3{ margin-top:18px; margin-bottom:8px; color:#fff }
-    .panel p, .panel li{ color:var(--muted); line-height:1.65 }
-    .panel ul{ margin-left:20px }
-
-    /* Footer */
-    footer{ border-top:1px solid var(--line); background:rgba(10,16,25,.85); padding:32px 0; margin-top:40px }
-    .foot{ display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap }
-    .foot .links{ display:flex; gap:22px }
-    .foot a{ color:var(--muted); text-decoration:none }
-    .foot a:hover{ color:var(--mag) }
-
-    /* Responsive */
-    @media (max-width: 1024px){
-      .grid{ grid-template-columns:repeat(2,1fr) }
-      .steps{ grid-template-columns: repeat(3,1fr) }
-      .strip{ grid-template-columns: repeat(3,1fr) }
-      .pricing{ grid-template-columns: repeat(2,1fr) }
-    }
-    @media (max-width: 768px){
-      .nav-links{ display:none }
-      .burger{ display:flex }
-      .hero-banner img{ height:300px }
-      .grid{ grid-template-columns:1fr }
-      .steps{ grid-template-columns: repeat(2,1fr) }
-      .strip{ grid-template-columns: repeat(2,1fr) }
-      .pricing{ grid-template-columns: 1fr }
-    }
-    @media (max-width: 460px){
-      .hero-banner img{ height:220px }
-      .steps{ grid-template-columns:1fr }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FluidFlight - Master Indoor Skydiving & Wind Tunnel Flying</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0a0e1a 0%, #1a2332 25%, #0f1823 50%, #1a2332 75%, #0a0e1a 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Animated Fluid Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 20% 50%, rgba(0, 208, 255, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(102, 178, 255, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 20%, rgba(0, 147, 233, 0.06) 0%, transparent 50%);
+            animation: fluidFlow 20s ease-in-out infinite;
+            z-index: -2;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(180deg, transparent 0%, rgba(10, 14, 26, 0.4) 100%),
+                radial-gradient(ellipse at top, rgba(0, 208, 255, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        @keyframes fluidFlow {
+            0%, 100% { 
+                transform: rotate(0deg) scale(1);
+                filter: blur(40px);
+            }
+            33% { 
+                transform: rotate(120deg) scale(1.1);
+                filter: blur(45px);
+            }
+            66% { 
+                transform: rotate(240deg) scale(0.95);
+                filter: blur(35px);
+            }
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header */
+        .header {
+            padding: 20px 0;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: linear-gradient(180deg, rgba(10, 14, 26, 0.98) 0%, rgba(10, 14, 26, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(0, 208, 255, 0.2);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 26px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00d0ff 0%, #66b2ff 50%, #0093e9 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .logo::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00d0ff, transparent);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0%, 100% { opacity: 0.3; transform: translateX(-100%); }
+            50% { opacity: 1; transform: translateX(0); }
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 35px;
+            list-style: none;
+            align-items: center;
+        }
+        
+        .nav-links a {
+            color: #a8c5e0;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            position: relative;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+        }
+        
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #00d0ff, #0093e9);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-links a:hover {
+            color: #00d0ff;
+        }
+        
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+        
+        /* Content Sections */
+        .main-content {
+            display: block;
+        }
+        
+        .privacy-content, .terms-content {
+            display: none;
+            padding: 120px 0 40px;
+            min-height: 100vh;
+        }
+        
+        /* Hero Section */
+        .hero {
+            padding: 140px 0 100px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-content {
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .hero h1 {
+            font-size: 4.5rem;
+            font-weight: 900;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, #00d0ff 0%, #66b2ff 25%, #ffffff 50%, #00d0ff 75%, #0093e9 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            background-size: 200% 200%;
+            animation: gradientShift 8s ease infinite;
+            line-height: 1.1;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .hero-subtitle {
+            font-size: 1.8rem;
+            color: #00d0ff;
+            margin-bottom: 20px;
+            font-weight: 300;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+        
+        .hero p {
+            font-size: 1.25rem;
+            color: #a8c5e0;
+            margin-bottom: 45px;
+            line-height: 1.7;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        /* Floating Elements Animation */
+        .float-element {
+            position: absolute;
+            opacity: 0.6;
+            animation: float 6s ease-in-out infinite;
+            pointer-events: none;
+            color: #00d0ff;
+            font-size: 2rem;
+        }
+        
+        .float-element:nth-child(1) { top: 20%; left: 10%; animation-delay: 0s; }
+        .float-element:nth-child(2) { top: 60%; right: 10%; animation-delay: 2s; }
+        .float-element:nth-child(3) { bottom: 20%; left: 15%; animation-delay: 4s; }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(10deg); }
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 25px;
+            justify-content: center;
+            margin-bottom: 70px;
+            flex-wrap: wrap;
+        }
+        
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 40px;
+            background: linear-gradient(135deg, #00d0ff 0%, #0093e9 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 17px;
+            transition: all 0.4s ease;
+            box-shadow: 0 10px 30px rgba(0, 208, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .download-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .download-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 208, 255, 0.4);
+        }
+        
+        .download-btn.secondary {
+            background: linear-gradient(135deg, #1a5490 0%, #2a7fc7 100%);
+            box-shadow: 0 10px 30px rgba(26, 84, 144, 0.3);
+        }
+        
+        .download-btn.secondary:hover {
+            box-shadow: 0 15px 40px rgba(42, 127, 199, 0.4);
+        }
+        
+        /* Hero Banner */
+        .hero-banner {
+            width: 100%;
+            max-width: 1200px;
+            height: 500px;
+            margin: 0 auto 80px;
+            border-radius: 25px;
+            background: linear-gradient(135deg, #0a0e1a 0%, #1a2332 100%);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(0, 208, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .hero-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg at 50% 50%, 
+                transparent 0deg, 
+                rgba(0, 208, 255, 0.1) 60deg, 
+                transparent 120deg, 
+                rgba(102, 178, 255, 0.1) 180deg, 
+                transparent 240deg, 
+                rgba(0, 147, 233, 0.1) 300deg, 
+                transparent 360deg);
+            animation: spinFluid 10s linear infinite;
+        }
+        
+        @keyframes spinFluid {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .banner-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .banner-title {
+            font-size: 3.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00d0ff 0%, #ffffff 50%, #00d0ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+        
+        .banner-subtitle {
+            font-size: 1.3rem;
+            color: #a8c5e0;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        
+        .banner-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+        
+        /* Features Section */
+        .features {
+            padding: 100px 0;
+            background: linear-gradient(180deg, rgba(10, 14, 26, 0.6) 0%, rgba(26, 35, 50, 0.4) 100%);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+        
+        .features::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0, 208, 255, 0.5), transparent);
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 70px;
+        }
+        
+        .section-header h2 {
+            font-size: 3.5rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #00d0ff 0%, #66b2ff 50%, #0093e9 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .section-header p {
+            font-size: 1.2rem;
+            color: #a8c5e0;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 40px;
+        }
+        
+        .feature-card {
+            background: linear-gradient(135deg, rgba(26, 35, 50, 0.8) 0%, rgba(10, 14, 26, 0.9) 100%);
+            border: 1px solid rgba(0, 208, 255, 0.2);
+            border-radius: 20px;
+            padding: 45px 35px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #00d0ff, transparent, #0093e9);
+            border-radius: 20px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: -1;
+        }
+        
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 50px rgba(0, 208, 255, 0.3);
+        }
+        
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #00d0ff 0%, #0093e9 100%);
+            border-radius: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            box-shadow: 0 10px 25px rgba(0, 208, 255, 0.3);
+        }
+        
+        .feature-card h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #ffffff;
+        }
+        
+        .feature-card p {
+            color: #a8c5e0;
+            line-height: 1.7;
+            font-size: 16px;
+        }
+        
+        /* Educational Content Section */
+        .education {
+            padding: 100px 0;
+            position: relative;
+        }
+        
+        .education-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+        
+        .edu-card {
+            background: linear-gradient(135deg, rgba(0, 208, 255, 0.05) 0%, rgba(0, 147, 233, 0.02) 100%);
+            border: 1px solid rgba(0, 208, 255, 0.3);
+            border-radius: 15px;
+            padding: 30px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .edu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 208, 255, 0.2);
+            background: linear-gradient(135deg, rgba(0, 208, 255, 0.1) 0%, rgba(0, 147, 233, 0.05) 100%);
+        }
+        
+        .edu-card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .edu-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #00d0ff 0%, #0093e9 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .edu-card h3 {
+            font-size: 20px;
+            color: #ffffff;
+        }
+        
+        .edu-card p {
+            color: #a8c5e0;
+            line-height: 1.6;
+        }
+        
+        .edu-level {
+            display: inline-block;
+            padding: 5px 12px;
+            background: rgba(0, 208, 255, 0.2);
+            border-radius: 20px;
+            font-size: 12px;
+            color: #00d0ff;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Process Section */
+        .process {
+            padding: 100px 0;
+            background: linear-gradient(180deg, rgba(26, 35, 50, 0.3) 0%, rgba(10, 14, 26, 0.6) 100%);
+        }
+        
+        .process-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-top: 60px;
+        }
+        
+        .process-step {
+            text-align: center;
+            position: relative;
+        }
+        
+        .step-number {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #00d0ff 0%, #0093e9 100%);
+            border-radius: 50%;
+            margin: 0 auto 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 700;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 208, 255, 0.3);
+        }
+        
+        .step-number::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 208, 255, 0.3);
+            animation: pulse-ring 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.3); opacity: 0; }
+        }
+        
+        .process-step h3 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #ffffff;
+        }
+        
+        .process-step p {
+            color: #a8c5e0;
+            line-height: 1.6;
+        }
+        
+        /* Coaching Section */
+        .coaching {
+            padding: 100px 0;
+            position: relative;
+        }
+        
+        .coaching-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+            margin-top: 60px;
+        }
+        
+        .coaching-text h3 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, #00d0ff 0%, #66b2ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .coaching-text p {
+            font-size: 1.1rem;
+            color: #a8c5e0;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+        
+        .coaching-features {
+            margin-top: 30px;
+        }
+        
+        .coaching-feature {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .check-icon {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #00d0ff 0%, #0093e9 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .coaching-visual {
+            position: relative;
+            padding: 40px;
+            background: linear-gradient(135deg, rgba(0, 208, 255, 0.05) 0%, rgba(0, 147, 233, 0.02) 100%);
+            border-radius: 25px;
+            border: 1px solid rgba(0, 208, 255, 0.2);
+        }
+        
+        .upload-demo {
+            text-align: center;
+            padding: 60px 40px;
+            border: 2px dashed rgba(0, 208, 255, 0.3);
+            border-radius: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-demo:hover {
+            border-color: #00d0ff;
+            background: rgba(0, 208, 255, 0.05);
+        }
+        
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #00d0ff;
+        }
+        
+        .upload-demo h4 {
+            font-size: 1.5rem;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+        
+        .upload-demo p {
+            color: #a8c5e0;
+        }
+        
+        /* Stats Section */
+        .stats {
+            padding: 80px 0;
+            background: linear-gradient(135deg, rgba(0, 208, 255, 0.1) 0%, rgba(0, 147, 233, 0.05) 100%);
+            border-top: 1px solid rgba(0, 208, 255, 0.2);
+            border-bottom: 1px solid rgba(0, 208, 255, 0.2);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            text-align: center;
+        }
+        
+        .stat-item h3 {
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00d0ff 0%, #66b2ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        
+        .stat-item p {
+            font-size: 1.1rem;
+            color: #a8c5e0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Final CTA */
+        .final-cta {
+            padding: 100px 0;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(0, 208, 255, 0.05) 0%, rgba(0, 147, 233, 0.02) 100%);
+            position: relative;
+        }
+        
+        .final-cta h2 {
+            font-size: 3.5rem;
+            font-weight: 900;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, #00d0ff 0%, #ffffff 50%, #00d0ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .final-cta p {
+            font-size: 1.3rem;
+            color: #a8c5e0;
+            margin-bottom: 45px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        /* Privacy Policy & Terms Styles */
+        .legal-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        
+        .legal-header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #00d0ff 0%, #66b2ff 50%, #0093e9 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .legal-header p {
+            color: #a8c5e0;
+            font-size: 1.1rem;
+        }
+        
+        .legal-content {
+            max-width: 900px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, rgba(26, 35, 50, 0.6) 0%, rgba(10, 14, 26, 0.8) 100%);
+            border-radius: 25px;
+            padding: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 208, 255, 0.2);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        }
+        
+        .legal-content h2 {
+            color: #00d0ff;
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+            margin-top: 35px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .legal-content h2:first-child {
+            margin-top: 0;
+        }
+        
+        .legal-content p, .legal-content li {
+            color: #a8c5e0;
+            line-height: 1.8;
+            margin-bottom: 18px;
+            font-size: 16px;
+        }
+        
+        .legal-content ul {
+            margin-left: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .legal-content strong {
+            color: #ffffff;
+            font-weight: 600;
+        }
+        
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #00d0ff 0%, #0093e9 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 600;
+            margin-bottom: 40px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(0, 208, 255, 0.3);
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(0, 208, 255, 0.4);
+        }
+        
+        /* Footer */
+        .footer {
+            padding: 50px 0;
+            text-align: center;
+            border-top: 1px solid rgba(0, 208, 255, 0.2);
+            background: linear-gradient(180deg, rgba(10, 14, 26, 0.9) 0%, rgba(10, 14, 26, 1) 100%);
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .footer-logo {
+            font-size: 22px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00d0ff 0%, #66b2ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .footer-links {
+            display: flex;
+            gap: 35px;
+            list-style: none;
+        }
+        
+        .footer-links a {
+            color: #5a7a9a;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .footer-links a:hover {
+            color: #00d0ff;
+        }
+        
+        .footer-bottom {
+            border-top: 1px solid rgba(0, 208, 255, 0.1);
+            padding-top: 25px;
+            color: #5a7a9a;
+        }
+        
+        /* Mobile Menu */
+        .mobile-menu-toggle {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 5px;
+            z-index: 1001;
+        }
+        
+        .mobile-menu-toggle span {
+            width: 28px;
+            height: 3px;
+            background: linear-gradient(90deg, #00d0ff, #0093e9);
+            margin: 3px 0;
+            transition: 0.3s;
+            border-radius: 3px;
+        }
+        
+        .mobile-menu-toggle.active span:nth-child(1) {
+            transform: rotate(-45deg) translate(-6px, 6px);
+        }
+        
+        .mobile-menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+        
+        .mobile-menu-toggle.active span:nth-child(3) {
+            transform: rotate(45deg) translate(-6px, -6px);
+        }
+        
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 85px;
+            left: 0;
+            right: 0;
+            background: linear-gradient(180deg, rgba(10, 14, 26, 0.98) 0%, rgba(10, 14, 26, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 208, 255, 0.3);
+            z-index: 999;
+            padding: 25px;
+        }
+        
+        .mobile-menu.active {
+            display: block;
+        }
+        
+        .mobile-nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            list-style: none;
+        }
+        
+        .mobile-nav-links a {
+            color: #a8c5e0;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 18px;
+            text-align: center;
+            padding: 12px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .mobile-nav-links a:hover {
+            color: #00d0ff;
+            background: rgba(0, 208, 255, 0.1);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 15px;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .mobile-menu-toggle {
+                display: flex;
+            }
+            
+            .hero {
+                padding: 120px 0 60px;
+            }
+            
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.2rem;
+            }
+            
+            .hero p {
+                font-size: 1.1rem;
+            }
+            
+            .hero-banner {
+                height: 300px;
+            }
+            
+            .banner-title {
+                font-size: 2rem;
+            }
+            
+            .section-header h2 {
+                font-size: 2.5rem;
+            }
+            
+            .features-grid, .education-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .coaching-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .process-steps {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                gap: 25px;
+            }
+            
+            .footer-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .legal-content {
+                padding: 30px 20px;
+                margin: 0 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1rem;
+                letter-spacing: 2px;
+            }
+            
+            .hero-banner {
+                height: 250px;
+            }
+            
+            .banner-title {
+                font-size: 1.5rem;
+            }
+            
+            .download-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .cta-buttons {
+                width: 100%;
+            }
+            
+            .section-header h2 {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.8s ease forwards;
+        }
+        
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Scroll animations */
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s ease;
+        }
+        
+        .scroll-reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
 </head>
 <body>
-  <!-- Header -->
-  <header class="header">
-    <nav class="nav container">
-      <div class="logo" onclick="goHome()">FlightFluid</div>
-      <ul class="nav-links">
-        <li><a href="#features" onclick="showMain()">Features</a></li>
-        <li><a href="#how" onclick="showMain()">How It Works</a></li>
-        <li><a href="#coaches" onclick="showMain()">Coaches</a></li>
-        <li><a href="#download" onclick="showMain()">Download</a></li>
-        <li><a href="#pricing" onclick="showMain()">Pricing</a></li>
-        <li><a onclick="openPrivacy()">Privacy</a></li>
-      </ul>
-      <div class="burger" onclick="toggleMobile()"><span></span><span></span><span></span></div>
-    </nav>
-    <div class="mobile" id="mobile">
-      <ul>
-        <li><a href="#features" onclick="closeMobile(); showMain()">Features</a></li>
-        <li><a href="#how" onclick="closeMobile(); showMain()">How It Works</a></li>
-        <li><a href="#coaches" onclick="closeMobile(); showMain()">Coaches</a></li>
-        <li><a href="#download" onclick="closeMobile(); showMain()">Download</a></li>
-        <li><a href="#pricing" onclick="closeMobile(); showMain()">Pricing</a></li>
-        <li><a onclick="closeMobile(); openPrivacy()">Privacy</a></li>
-        <li><a onclick="closeMobile(); openTerms()">Terms</a></li>
-      </ul>
-    </div>
-  </header>
-
-  <!-- MAIN -->
-  <main id="main">
-    <!-- Hero -->
-    <section class="hero">
-      <div class="container hero-grid">
-        <div class="hero-banner">
-          <img src="hero-flightfluid-4k.webp" alt="FlightFluid hero banner — fluid ribbons swirling around a flyer silhouette" />
-        </div>
-        <div>
-          <h1>Master Fluid Flight in the Wind Tunnel</h1>
-          <p>Plan sessions, run precision drills, record flights, and get AI-powered debriefs that turn every minute of tunnel time into progress. Available for iOS and Android.</p>
-          <div class="badges">
-            <a class="store" href="#download">  App Store</a>
-            <a class="store secondary" href="#download">🤖  Play Store</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Features -->
-    <section class="section" id="features">
-      <div class="container">
-        <h2>Built for Flyers and Coaches</h2>
-        <div class="grid">
-          <div class="card">
-            <div class="icon">🎯</div>
-            <h3>Session Planner & Skill Tree</h3>
-            <p>Create goal‑based plans with levelled progressions (belly → back → sit → head‑down). Auto‑split time into focused sets with rest and notes.</p>
-          </div>
-          <div class="card">
-            <div class="icon">📹</div>
-            <h3>Capture & Annotate</h3>
-            <p>Record slow‑motion video, draw lines, and drop timestamps to mark entries, fall‑rate changes, docks, and exits.</p>
-          </div>
-          <div class="card">
-            <div class="icon">🧠</div>
-            <h3>AI Debrief</h3>
-            <p>Computer‑vision highlights posture symmetry, centerline drift, and transition smoothness. Get a prioritized, actionable briefing for the next session.</p>
-          </div>
-          <div class="card">
-            <div class="icon">📈</div>
-            <h3>Metrics that Matter</h3>
-            <p>Track speed bands, hold time on target, stability score, and transition efficiency with trendlines across flights.</p>
-          </div>
-          <div class="card">
-            <div class="icon">🗓️</div>
-            <h3>Booking & Logbook</h3>
-            <p>Book coaches, manage blocks, and auto‑log minutes, drills, notes, and media in a searchable logbook.</p>
-          </div>
-          <div class="card">
-            <div class="icon">🌐</div>
-            <h3>Coach Marketplace</h3>
-            <p>Find rated coaches by discipline and tunnel. Share plans and debriefs with students in one tap.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- How it works -->
-    <section class="section" id="how">
-      <div class="container">
-        <h2>How FlightFluid Works</h2>
-        <div class="steps">
-          <div class="step"><div class="dot">1</div><h4>Set Goals</h4><p>Pick skills & drills; FlightFluid builds a plan.</p></div>
-          <div class="step"><div class="dot">2</div><h4>Book & Brief</h4><p>Share the plan with your coach and tunnel.</p></div>
-          <div class="step"><div class="dot">3</div><h4>Fly & Record</h4><p>Capture angles with auto‑timestamps.</p></div>
-          <div class="step"><div class="dot">4</div><h4>AI Debrief</h4><p>Get instant notes, cues, and drills.</p></div>
-          <div class="step"><div class="dot">5</div><h4>Progress</h4><p>Unlock next steps on your skill tree.</p></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Coaches -->
-    <section class="section" id="coaches">
-      <div class="container">
-        <h2>Featured Coaches</h2>
-        <div class="strip">
-          <div class="coach"><img src="https://images.unsplash.com/photo-1521312709434-c3dc3a2b1c9b?auto=format&fit=crop&w=900&q=60" alt="coach"/><h4>Alex M.</h4><small>Dynamic / Sit‑Fly • iFLY</small></div>
-          <div class="coach"><img src="https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?auto=format&fit=crop&w=900&q=60" alt="coach"/><h4>Rina K.</h4><small>Head‑Down • IndoorWings</small></div>
-          <div class="coach"><img src="https://images.unsplash.com/photo-1532077795300-c4b487f601f5?auto=format&fit=crop&w=900&q=60" alt="coach"/><h4>Diego L.</h4><small>Back‑Flying • WindZone</small></div>
-          <div class="coach"><img src="https://images.unsplash.com/photo-1542326237-94b1c5a538d5?auto=format&fit=crop&w=900&q=60" alt="coach"/><h4>Sarah P.</h4><small>RW / Belly • SkyLab</small></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Pricing -->
-    <section class="section" id="pricing">
-      <div class="container">
-        <h2>Simple Pricing</h2>
-        <div class="pricing">
-          <div class="plan">
-            <h3>Solo</h3>
-            <div class="price">Free</div>
-            <ul>
-              <li>Session planner & basic logbook</li>
-              <li>Record & annotate videos</li>
-              <li>3 AI debriefs / month</li>
+    <!-- Floating Elements -->
+    <div class="float-element">✈️</div>
+    <div class="float-element">🌊</div>
+    <div class="float-element">💨</div>
+    
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo" onclick="showHomeWithURL()">FluidFlight</div>
+            
+            <!-- Desktop Navigation -->
+            <ul class="nav-links">
+                <li><a href="#features" onclick="showHome()">Features</a></li>
+                <li><a href="#education" onclick="showHome()">Learn</a></li>
+                <li><a href="#coaching" onclick="showHome()">Coaching</a></li>
+                <li><a href="#how-it-works" onclick="showHome()">How It Works</a></li>
+                <li><a onclick="showPrivacyWithURL()">Privacy</a></li>
             </ul>
-            <a class="cta" href="#download">Get Started</a>
-          </div>
-          <div class="plan pop">
-            <h3>Pro Flyer</h3>
-            <div class="price">$9 / mo</div>
-            <ul>
-              <li>Unlimited AI debriefs</li>
-              <li>Advanced metrics & trends</li>
-              <li>Cloud media sync</li>
+            
+            <!-- Mobile Menu Toggle -->
+            <div class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </nav>
+        
+        <!-- Mobile Menu -->
+        <div class="mobile-menu" id="mobileMenu">
+            <ul class="mobile-nav-links">
+                <li><a href="#features" onclick="showHome(); closeMobileMenu();">Features</a></li>
+                <li><a href="#education" onclick="showHome(); closeMobileMenu();">Learn</a></li>
+                <li><a href="#coaching" onclick="showHome(); closeMobileMenu();">Coaching</a></li>
+                <li><a href="#how-it-works" onclick="showHome(); closeMobileMenu();">How It Works</a></li>
+                <li><a onclick="showPrivacyWithURL(); closeMobileMenu();">Privacy</a></li>
             </ul>
-            <a class="cta alt" href="#download">Go Pro</a>
-          </div>
-          <div class="plan">
-            <h3>Coach</h3>
-            <div class="price">$19 / mo</div>
-            <ul>
-              <li>Student management</li>
-              <li>Shared plans & notes</li>
-              <li>Marketplace listing</li>
-            </ul>
-            <a class="cta" href="#download">Start Coaching</a>
-          </div>
         </div>
-      </div>
-    </section>
+    </header>
 
-    <!-- Download CTA -->
-    <section class="final" id="download">
-      <div class="container">
-        <h2 style="text-transform:uppercase; letter-spacing:.08em; background:linear-gradient(45deg,var(--mag),var(--cy)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent">Download FlightFluid</h2>
-        <p style="color:var(--muted); max-width:820px; margin:8px auto 22px">Join flyers worldwide mastering fluid flight with structured plans, real‑time cues, and AI debriefs.</p>
-        <div class="badges">
-          <a class="store" href="#">  App Store</a>
-          <a class="store secondary" href="#">🤖  Play Store</a>
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container">
+                <div class="hero-content fade-in">
+                    <h1>Master Fluid Flight</h1>
+                    <div class="hero-subtitle">Indoor Skydiving Excellence</div>
+                    <p>Learn, practice, and perfect your wind tunnel flying skills with expert coaching, comprehensive tutorials, and personalized video analysis from world-class instructors.</p>
+                    
+                    <div class="cta-buttons">
+                        <a href="#" class="download-btn">
+                            📱 Download for iOS
+                        </a>
+                        <a href="#" class="download-btn secondary">
+                            🤖 Get on Android
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Hero Banner -->
+                <div class="hero-banner fade-in">
+                    <div class="banner-content">
+                        <div class="banner-icon">🌀</div>
+                        <div class="banner-title">FluidFlight</div>
+                        <div class="banner-subtitle">Master Fluid Flight</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features" id="features">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Why Choose FluidFlight?</h2>
+                    <p>The complete platform for indoor skydiving progression</p>
+                </div>
+                
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📚</div>
+                        <h3>Comprehensive Education</h3>
+                        <p>Access structured learning paths from beginner basics to advanced dynamic flying. Learn proper body positions, transitions, and techniques through detailed tutorials and demonstration videos.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🎥</div>
+                        <h3>Video Analysis & Coaching</h3>
+                        <p>Upload your tunnel session videos and receive detailed feedback from certified instructors. Get frame-by-frame analysis, personalized tips, and progression plans tailored to your skill level.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🏆</div>
+                        <h3>Track Your Progress</h3>
+                        <p>Monitor your improvement with detailed skill assessments, achievement badges, and progression milestones. Set goals and watch your flying evolve from first flight to competition level.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">👥</div>
+                        <h3>Community & Events</h3>
+                        <p>Connect with flyers worldwide, join virtual coaching sessions, and participate in challenges. Find tunnel partners, share experiences, and learn from the global flying community.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h3>Skill-Based Curriculum</h3>
+                        <p>Follow structured progressions for belly flying, back flying, dynamic, and head-down disciplines. Each skill level includes specific drills, exercises, and benchmarks for mastery.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">💡</div>
+                        <h3>Safety First Approach</h3>
+                        <p>Learn essential safety protocols, emergency procedures, and tunnel etiquette. Understand wind speeds, proper gear, and communication signals to ensure safe flying sessions.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Educational Content Section -->
+        <section class="education" id="education">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Learn From The Best</h2>
+                    <p>Structured learning paths for every skill level</p>
+                </div>
+                
+                <div class="education-grid">
+                    <div class="edu-card">
+                        <div class="edu-card-header">
+                            <div class="edu-icon">🎯</div>
+                            <h3>Fundamentals</h3>
+                        </div>
+                        <p>Master the basics of body flight including neutral position, altitude control, forward/backward movement, and turns. Build a solid foundation for all advanced techniques.</p>
+                        <span class="edu-level">Beginner</span>
+                    </div>
+                    
+                    <div class="edu-card">
+                        <div class="edu-card-header">
+                            <div class="edu-icon">🔄</div>
+                            <h3>Transitions</h3>
+                        </div>
+                        <p>Learn smooth transitions between belly and back flying, sit flying positions, and controlled spins. Develop flow and control in all orientations.</p>
+                        <span class="edu-level">Intermediate</span>
+                    </div>
+                    
+                    <div class="edu-card">
+                        <div class="edu-card-header">
+                            <div class="edu-icon">🚀</div>
+                            <h3>Dynamic Flying</h3>
+                        </div>
+                        <p>Progress to advanced maneuvers including layouts, carving patterns, and dynamic transitions. Explore creative movement and develop your unique flying style.</p>
+                        <span class="edu-level">Advanced</span>
+                    </div>
+                    
+                    <div class="edu-card">
+                        <div class="edu-card-header">
+                            <div class="edu-icon">⬇️</div>
+                            <h3>Head Down</h3>
+                        </div>
+                        <p>Master vertical orientation with head-down flying techniques. Learn daffy positions, shelf entries, and advanced head-down carving patterns.</p>
+                        <span class="edu-level">Advanced</span>
+                    </div>
+                    
+                    <div class="edu-card">
+                        <div class="edu-card-header">
+                            <div class="edu-icon">👥</div>
+                            <h3>2-Way & 4-Way</h3>
+                        </div>
+                        <p>Develop team flying skills for formation work. Learn grips, blocks, randoms, and synchronized movements for competitive formation skydiving.</p>
+                        <span class="edu-level">Competition</span>
+                    </div>
+                    
+                    <div class="edu-card">
+                        <div class="edu-card-header">
+                            <div class="edu-icon">🎨</div>
+                            <h3>Freestyle</h3>
+                        </div>
+                        <p>Express yourself through creative choreography and artistic flying. Combine all disciplines into fluid routines set to music.</p>
+                        <span class="edu-level">Expert</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Coaching Section -->
+        <section class="coaching" id="coaching">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Professional Video Coaching</h2>
+                    <p>Get personalized feedback from world-class instructors</p>
+                </div>
+                
+                <div class="coaching-content">
+                    <div class="coaching-text">
+                        <h3>Upload. Analyze. Improve.</h3>
+                        <p>Transform your flying with expert video analysis. Our certified coaches provide detailed breakdowns of your technique, identifying areas for improvement and celebrating your progress.</p>
+                        <p>Each video submission receives comprehensive feedback within 48 hours, including timestamped comments, visual annotations, and personalized drill recommendations.</p>
+                        
+                        <div class="coaching-features">
+                            <div class="coaching-feature">
+                                <div class="check-icon">✓</div>
+                                <span>Frame-by-frame analysis with visual markers</span>
+                            </div>
+                            <div class="coaching-feature">
+                                <div class="check-icon">✓</div>
+                                <span>Personalized progression plans</span>
+                            </div>
+                            <div class="coaching-feature">
+                                <div class="check-icon">✓</div>
+                                <span>Side-by-side comparisons with proper technique</span>
+                            </div>
+                            <div class="coaching-feature">
+                                <div class="check-icon">✓</div>
+                                <span>Specific drills to address weaknesses</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="coaching-visual">
+                        <div class="upload-demo">
+                            <div class="upload-icon">📹</div>
+                            <h4>Upload Your Session</h4>
+                            <p>Simply record your tunnel session and upload for professional analysis</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Process Section -->
+        <section class="process" id="how-it-works">
+            <div class="container">
+                <div class="section-header">
+                    <h2>How It Works</h2>
+                    <p>Your journey to mastering wind tunnel flying</p>
+                </div>
+                
+                <div class="process-steps">
+                    <div class="process-step">
+                        <div class="step-number">1</div>
+                        <h3>Create Your Profile</h3>
+                        <p>Set up your flyer profile with experience level, goals, and preferred disciplines</p>
+                    </div>
+                    
+                    <div class="process-step">
+                        <div class="step-number">2</div>
+                        <h3>Choose Learning Path</h3>
+                        <p>Select from structured curricula or create a custom training plan with your coach</p>
+                    </div>
+                    
+                    <div class="process-step">
+                        <div class="step-number">3</div>
+                        <h3>Study & Practice</h3>
+                        <p>Access video tutorials, written guides, and visualization exercises for your skill level</p>
+                    </div>
+                    
+                    <div class="process-step">
+                        <div class="step-number">4</div>
+                        <h3>Record Your Sessions</h3>
+                        <p>Film your tunnel time using any camera or ask tunnel staff to record your flights</p>
+                    </div>
+                    
+                    <div class="process-step">
+                        <div class="step-number">5</div>
+                        <h3>Upload for Analysis</h3>
+                        <p>Submit videos through the app for professional coaching feedback</p>
+                    </div>
+                    
+                    <div class="process-step">
+                        <div class="step-number">6</div>
+                        <h3>Improve & Progress</h3>
+                        <p>Apply feedback, complete assigned drills, and track your skill advancement</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Section -->
+        <section class="stats">
+            <div class="container">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <h3>10,000+</h3>
+                        <p>Active Flyers</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3>50+</h3>
+                        <p>Expert Coaches</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3>500+</h3>
+                        <p>Video Tutorials</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3>24hr</h3>
+                        <p>Feedback Time</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Final CTA -->
+        <section class="final-cta" id="download">
+            <div class="container">
+                <h2>Ready to Fly?</h2>
+                <p>Join thousands of flyers improving their skills with FluidFlight</p>
+                
+                <div class="cta-buttons">
+                    <a href="#" class="download-btn">
+                        📱 Download for iOS
+                    </a>
+                    <a href="#" class="download-btn secondary">
+                        🤖 Get on Android
+                    </a>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Privacy Policy Section -->
+    <div class="privacy-content" id="privacyContent">
+        <div class="container">
+            <a class="back-btn" onclick="showHomeWithURL()">← Back to Home</a>
+            
+            <div class="legal-header">
+                <h1>Privacy Policy</h1>
+                <p>Last updated: December 2024</p>
+            </div>
+            
+            <div class="legal-content">
+                <h2>1. Information We Collect</h2>
+                <p><strong>Account Information:</strong> When you create a FluidFlight account, we collect your email address, username, profile information, flying experience level, and training goals.</p>
+                <p><strong>Video Content:</strong> We process videos you upload of your wind tunnel sessions for coaching analysis and feedback purposes.</p>
+                <p><strong>Progress Data:</strong> We track your skill progression, completed tutorials, coaching feedback received, and achievement milestones.</p>
+                
+                <h2>2. Legal Basis for Processing (GDPR)</h2>
+                <p>We process your personal data based on the following legal grounds:</p>
+                <ul>
+                    <li><strong>Contract Performance:</strong> Providing coaching services, video analysis, and educational content</li>
+                    <li><strong>Legitimate Interest:</strong> App improvement, safety protocols, and community features</li>
+                    <li><strong>Consent:</strong> Marketing communications and optional features (where required by law)</li>
+                    <li><strong>Legal Obligation:</strong> Compliance with safety regulations and legal requests</li>
+                </ul>
+                
+                <h2>3. How We Use Your Information</h2>
+                <ul>
+                    <li><strong>Coaching Services:</strong> Analyze your flying videos to provide personalized feedback and progression plans</li>
+                    <li><strong>Educational Content:</strong> Recommend appropriate tutorials and training materials based on your skill level</li>
+                    <li><strong>Progress Tracking:</strong> Monitor your skill development and provide achievement recognition</li>
+                    <li><strong>Community Features:</strong> Enable connections with other flyers and coaches</li>
+                    <li><strong>Safety & Support:</strong> Ensure safe flying practices and provide customer assistance</li>
+                    <li><strong>Service Improvement:</strong> Enhance our coaching methodologies and content quality</li>
+                </ul>
+                
+                <h2>4. Video Processing & Storage</h2>
+                <p><strong>Coaching Analysis:</strong> Videos are reviewed by certified coaches who provide detailed feedback and annotations.</p>
+                <p><strong>Storage Duration:</strong> Videos are retained for 90 days after analysis to allow for progress comparison and follow-up questions.</p>
+                <p><strong>AI Assistance:</strong> We may use AI tools to assist coaches in identifying key technique points, but all feedback is reviewed and personalized by human experts.</p>
+                <p><strong>Content Ownership:</strong> You retain full ownership of your flying videos. We only use them for providing coaching services.</p>
+                <p><strong>Privacy Controls:</strong> You can delete your videos at any time, and choose whether to share them with the community.</p>
+                
+                <h2>5. Data Sharing & Third Parties</h2>
+                <p>We do not sell or rent your personal information. Limited sharing occurs only in these circumstances:</p>
+                <ul>
+                    <li><strong>Certified Coaches:</strong> Your videos and profile information with assigned coaches for analysis</li>
+                    <li><strong>Cloud Storage:</strong> AWS for secure video storage and streaming</li>
+                    <li><strong>Payment Processing:</strong> App Store, Google Play Store, and Stripe for subscriptions</li>
+                    <li><strong>Analytics:</strong> Anonymous usage data for app improvement (opt-out available)</li>
+                    <li><strong>Legal Requirements:</strong> When required by valid legal process or safety concerns</li>
+                </ul>
+                
+                <h2>6. Your Privacy Rights</h2>
+                <p>You have the following rights regarding your personal information:</p>
+                <ul>
+                    <li><strong>Access:</strong> Request a copy of your personal data and coaching history</li>
+                    <li><strong>Correction:</strong> Update or correct your profile and skill information</li>
+                    <li><strong>Deletion:</strong> Request deletion of your account and all associated data</li>
+                    <li><strong>Data Portability:</strong> Export your progress data and coaching feedback</li>
+                    <li><strong>Restrict Processing:</strong> Limit how we use your information</li>
+                    <li><strong>Withdraw Consent:</strong> Opt-out of optional features and communications</li>
+                </ul>
+                <p><strong>Exercise Your Rights:</strong> Contact us at <strong>privacy@fluidflight.app</strong> or use in-app privacy controls.</p>
+                
+                <h2>7. Security Measures</h2>
+                <p>We implement comprehensive security measures to protect your data:</p>
+                <ul>
+                    <li><strong>Encryption:</strong> End-to-end encryption for video uploads and personal data</li>
+                    <li><strong>Access Controls:</strong> Strict coach verification and limited data access</li>
+                    <li><strong>Regular Audits:</strong> Security assessments and penetration testing</li>
+                    <li><strong>Incident Response:</strong> 24/7 monitoring and breach notification procedures</li>
+                </ul>
+                
+                <h2>8. Data Retention</h2>
+                <p><strong>Account Data:</strong> Retained while your account is active and for 30 days after deletion</p>
+                <p><strong>Videos:</strong> Kept for 90 days after coaching analysis unless you delete them sooner</p>
+                <p><strong>Progress Records:</strong> Maintained for the duration of your account to track improvement</p>
+                <p><strong>Coaching Feedback:</strong> Stored permanently with your account for reference</p>
+                
+                <h2>9. Children's Privacy</h2>
+                <p>FluidFlight requires users to be at least 13 years old. Users under 18 must have parental consent. We do not knowingly collect information from children under 13.</p>
+                
+                <h2>10. International Data Transfers</h2>
+                <p>Your information may be processed in countries other than your own. We ensure adequate protection through:</p>
+                <ul>
+                    <li>Standard Contractual Clauses for international transfers</li>
+                    <li>Processing only in countries with adequate data protection laws</li>
+                    <li>Encryption and security measures regardless of location</li>
+                </ul>
+                
+                <h2>11. Changes to This Policy</h2>
+                <p>We may update this Privacy Policy to reflect changes in our practices. We will notify you of significant changes via app notification or email.</p>
+                
+                <h2>12. Contact Us</h2>
+                <p>For privacy questions or concerns:</p>
+                <p><strong>Email:</strong> privacy@fluidflight.app<br>
+                <strong>Support:</strong> support@fluidflight.app</p>
+            </div>
         </div>
-      </div>
-    </section>
-  </main>
-
-  <!-- PRIVACY -->
-  <section id="privacy" class="hidden">
-    <div class="container legal-wrap">
-      <div class="legal-header">
-        <h2 style="text-transform:uppercase; background:linear-gradient(45deg,var(--mag),var(--cy)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent">Privacy Policy</h2>
-        <p class="muted">Last updated: Aug 2025</p>
-      </div>
-      <div class="panel">
-        <p>FlightFluid processes your account details and training data to provide coaching features. Videos are stored locally unless you enable cloud sync. Text prompts for AI debriefs may be sent to trusted providers; videos are not used to train models.</p>
-        <h3>Data We Collect</h3>
-        <ul>
-          <li>Account: name, email</li>
-          <li>Training: plans, notes, metrics, media</li>
-          <li>Diagnostics: crash & performance logs</li>
-        </ul>
-        <h3>Your Rights</h3>
-        <p>Access, export, correct, or delete your data at any time: <strong>privacy@flightfluid.app</strong>.</p>
-      </div>
     </div>
-  </section>
 
-  <!-- TERMS -->
-  <section id="terms" class="hidden">
-    <div class="container legal-wrap">
-      <div class="legal-header">
-        <h2 style="text-transform:uppercase; background:linear-gradient(45deg,var(--mag),var(--cy)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent">Terms of Service</h2>
-      </div>
-      <div class="panel">
-        <p>By using FlightFluid you agree to follow local laws and tunnel rules. You retain ownership of your videos and training content and grant us a limited license to process them to deliver the service.</p>
-        <h3>Safety</h3>
-        <p>Coaching advice is guidance only. Always follow your instructor and facility procedures.</p>
-      </div>
+    <!-- Terms of Service Section -->
+    <div class="terms-content" id="termsContent">
+        <div class="container">
+            <a class="back-btn" onclick="showHomeWithURL()">← Back to Home</a>
+            
+            <div class="legal-header">
+                <h1>Terms of Service</h1>
+                <p>Last updated: December 2024</p>
+            </div>
+            
+            <div class="legal-content">
+                <h2>1. Acceptance of Terms</h2>
+                <p>By downloading, installing, or using FluidFlight ("App"), you agree to these Terms of Service. If you disagree with any part of these terms, please do not use our App.</p>
+                
+                <h2>2. Description of Service</h2>
+                <p>FluidFlight is an educational and coaching platform for indoor skydiving and wind tunnel flying. We provide video tutorials, personalized coaching through video analysis, progress tracking, and community features for flyers of all skill levels.</p>
+                
+                <h2>3. Eligibility</h2>
+                <p><strong>Age Requirements:</strong> You must be at least 13 years old to use FluidFlight. Users under 18 require parental consent.</p>
+                <p><strong>Physical Requirements:</strong> You acknowledge that wind tunnel flying is a physical activity. Consult with medical professionals and tunnel operators regarding your fitness to fly.</p>
+                
+                <h2>4. User Accounts</h2>
+                <p><strong>Account Security:</strong> You are responsible for maintaining the confidentiality of your account credentials.</p>
+                <p><strong>Accurate Information:</strong> You agree to provide accurate and current information in your profile.</p>
+                <p><strong>Account Suspension:</strong> We reserve the right to suspend accounts that violate these terms or engage in unsafe practices.</p>
+                
+                <h2>5. Content & Conduct</h2>
+                <p>You agree NOT to:</p>
+                <ul>
+                    <li>Upload content that violates others' privacy or intellectual property rights</li>
+                    <li>Share dangerous or unsafe flying techniques that could harm others</li>
+                    <li>Harass, bully, or intimidate other users or coaches</li>
+                    <li>Use the app for commercial purposes without authorization</li>
+                    <li>Attempt to reverse engineer or hack the app</li>
+                    <li>Impersonate coaches or misrepresent your qualifications</li>
+                </ul>
+                
+                <h2>6. Coaching Services</h2>
+                <p><strong>Not Medical Advice:</strong> Coaching feedback is for skill improvement only and does not constitute medical or safety advice.</p>
+                <p><strong>Coach Qualifications:</strong> All coaches are verified for their certifications, but FluidFlight is not responsible for coaching outcomes.</p>
+                <p><strong>Response Times:</strong> We aim for 24-48 hour coaching feedback but cannot guarantee specific timeframes.</p>
+                
+                <h2>7. Safety & Liability</h2>
+                <p><strong>Assumption of Risk:</strong> You acknowledge that wind tunnel flying carries inherent risks. FluidFlight is not liable for injuries sustained during flying activities.</p>
+                <p><strong>Follow Tunnel Rules:</strong> Always follow the safety rules and instructions of your local wind tunnel facility.</p>
+                <p><strong>Medical Clearance:</strong> Ensure you have appropriate medical clearance before engaging in wind tunnel flying.</p>
+                
+                <h2>8. Intellectual Property</h2>
+                <p><strong>Your Content:</strong> You retain ownership of videos you upload but grant us license to use them for providing coaching services.</p>
+                <p><strong>Our Content:</strong> All educational materials, tutorials, and app content are protected by copyright and may not be reproduced without permission.</p>
+                <p><strong>User License:</strong> We grant you a limited, non-exclusive license to use the app for personal, non-commercial purposes.</p>
+                
+                <h2>9. Payment Terms</h2>
+                <p><strong>Subscriptions:</strong> Paid features are billed through App Store or Google Play Store.</p>
+                <p><strong>Refunds:</strong> Refund policies are governed by the respective app store terms.</p>
+                <p><strong>Price Changes:</strong> We may adjust subscription prices with 30 days notice.</p>
+                
+                <h2>10. Disclaimer of Warranties</h2>
+                <p>FluidFlight is provided "as is" without warranties of any kind. We do not guarantee:</p>
+                <ul>
+                    <li>Specific skill improvement or progression timelines</li>
+                    <li>Availability of specific coaches or response times</li>
+                    <li>Uninterrupted or error-free service</li>
+                    <li>Safety outcomes from following coaching advice</li>
+                </ul>
+                
+                <h2>11. Limitation of Liability</h2>
+                <p>FluidFlight and its affiliates shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the app or participation in wind tunnel flying activities.</p>
+                
+                <h2>12. Indemnification</h2>
+                <p>You agree to indemnify and hold harmless FluidFlight from any claims arising from your use of the app, violation of these terms, or participation in flying activities.</p>
+                
+                <h2>13. Termination</h2>
+                <p>Either party may terminate this agreement at any time. Upon termination, your access to the app will cease, but certain provisions of these terms will survive.</p>
+                
+                <h2>14. Governing Law</h2>
+                <p>These terms are governed by the laws of the United States and the State of California, without regard to conflict of law principles.</p>
+                
+                <h2>15. Changes to Terms</h2>
+                <p>We may update these terms from time to time. Continued use of the app after changes constitutes acceptance of the new terms.</p>
+                
+                <h2>16. Contact Information</h2>
+                <p>For questions about these Terms of Service:</p>
+                <p><strong>Email:</strong> legal@fluidflight.app<br>
+                <strong>Support:</strong> support@fluidflight.app</p>
+            </div>
+        </div>
     </div>
-  </section>
 
-  <footer>
-    <div class="container foot">
-      <div class="logo" onclick="goHome()">FlightFluid</div>
-      <div class="links">
-        <a href="#features" onclick="showMain()">Features</a>
-        <a href="#download" onclick="showMain()">Download</a>
-        <a onclick="openPrivacy()">Privacy</a>
-        <a onclick="openTerms()">Terms</a>
-      </div>
-      <small style="color:var(--muted)">© 2025 FlightFluid. Master Fluid Flight.</small>
-    </div>
-  </footer>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">FluidFlight</div>
+                <ul class="footer-links">
+                    <li><a href="#features" onclick="showHome()">Features</a></li>
+                    <li><a href="#education" onclick="showHome()">Learn</a></li>
+                    <li><a href="#coaching" onclick="showHome()">Coaching</a></li>
+                    <li><a onclick="showPrivacyWithURL()">Privacy Policy</a></li>
+                    <li><a onclick="showTermsWithURL()">Terms of Service</a></li>
+                </ul>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 FluidFlight. All rights reserved. Fly Safe, Fly Fluid.</p>
+            </div>
+        </div>
+    </footer>
 
-  <script>
-    const mobile = document.getElementById('mobile');
-    function toggleMobile(){ mobile.style.display = mobile.style.display==='block' ? 'none' : 'block'; }
-    function closeMobile(){ mobile.style.display='none'; }
+    <script>
+        // Mobile menu functionality
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            const toggle = document.querySelector('.mobile-menu-toggle');
+            
+            mobileMenu.classList.toggle('active');
+            toggle.classList.toggle('active');
+        }
+        
+        function closeMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            const toggle = document.querySelector('.mobile-menu-toggle');
+            
+            mobileMenu.classList.remove('active');
+            toggle.classList.remove('active');
+        }
+        
+        // Navigation functions
+        function showHome() {
+            document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('privacyContent').style.display = 'none';
+            document.getElementById('termsContent').style.display = 'none';
+            window.scrollTo(0, 0);
+        }
+        
+        function showPrivacy() {
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('privacyContent').style.display = 'block';
+            document.getElementById('termsContent').style.display = 'none';
+            window.scrollTo(0, 0);
+        }
+        
+        function showTerms() {
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('privacyContent').style.display = 'none';
+            document.getElementById('termsContent').style.display = 'block';
+            window.scrollTo(0, 0);
+        }
 
-    const main = document.getElementById('main');
-    const privacy = document.getElementById('privacy');
-    const terms = document.getElementById('terms');
+        // URL-based navigation
+        function handleURLNavigation() {
+            const hash = window.location.hash;
+            if (hash === '#privacy') {
+                showPrivacy();
+            } else if (hash === '#terms') {
+                showTerms();
+            } else {
+                showHome();
+            }
+        }
 
-    function showMain(){ main.classList.remove('hidden'); privacy.classList.add('hidden'); terms.classList.add('hidden'); window.scrollTo(0,0); }
-    function openPrivacy(){ main.classList.add('hidden'); terms.classList.add('hidden'); privacy.classList.remove('hidden'); window.location.hash = '#privacy'; window.scrollTo(0,0); }
-    function openTerms(){ main.classList.add('hidden'); privacy.classList.add('hidden'); terms.classList.remove('hidden'); window.location.hash = '#terms'; window.scrollTo(0,0); }
-    function goHome(){ history.pushState(null,'',window.location.pathname); showMain(); }
+        // Handle browser back/forward buttons
+        window.addEventListener('popstate', handleURLNavigation);
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const hash = window.location.hash;
+            if (!hash || (hash !== '#privacy' && hash !== '#terms')) {
+                showHome();
+            } else {
+                handleURLNavigation();
+            }
+            
+            // Initialize scroll animations
+            initScrollAnimations();
+        });
 
-    // hash routing on load/back
-    function route(){ const h = location.hash; if(h==='#privacy') openPrivacy(); else if(h==='#terms') openTerms(); else showMain(); }
-    window.addEventListener('popstate', route); window.addEventListener('load', route);
-  </script>
+        // Update navigation functions to change URL
+        function showHomeWithURL() {
+            history.pushState(null, '', window.location.pathname);
+            showHome();
+            closeMobileMenu();
+        }
+        
+        function showPrivacyWithURL() {
+            history.pushState(null, '', '#privacy');
+            showPrivacy();
+            closeMobileMenu();
+        }
+        
+        function showTermsWithURL() {
+            history.pushState(null, '', '#terms');
+            showTerms();
+            closeMobileMenu();
+        }
+
+        // Smooth scrolling for anchor links
+        document.addEventListener('DOMContentLoaded', function() {
+            const links = document.querySelectorAll('a[href^="#"]');
+            
+            for (const link of links) {
+                link.addEventListener('click', function(e) {
+                    const href = this.getAttribute('href');
+                    if (href === '#privacy' || href === '#terms') {
+                        return; // Let the showPrivacy/showTerms functions handle these
+                    }
+                    
+                    e.preventDefault();
+                    const targetId = href.substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            }
+        });
+
+        // Scroll animations
+        function initScrollAnimations() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver(function(entries) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                    }
+                });
+            }, observerOptions);
+
+            // Add scroll-reveal class to elements you want to animate
+            const animatedElements = document.querySelectorAll('.feature-card, .process-step, .edu-card, .stat-item');
+            animatedElements.forEach(el => {
+                el.classList.add('scroll-reveal');
+                observer.observe(el);
+            });
+        }
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(e) {
+            const mobileMenu = document.getElementById('mobileMenu');
+            const toggle = document.querySelector('.mobile-menu-toggle');
+            
+            if (toggle && !toggle.contains(e.target) && !mobileMenu.contains(e.target)) {
+                closeMobileMenu();
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                closeMobileMenu();
+            }
+        });
+
+        // Add parallax effect to hero section
+        window.addEventListener('scroll', function() {
+            const scrolled = window.pageYOffset;
+            const parallax = document.querySelector('.hero-banner');
+            if (parallax) {
+                const speed = 0.5;
+                parallax.style.transform = `translateY(${scrolled * speed}px)`;
+            }
+        });
+    </script>
 </body>
 </html>
